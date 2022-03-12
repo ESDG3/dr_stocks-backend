@@ -31,7 +31,7 @@ class User(db.Model):
         "email": self.email,
         "password": self.password}
 
-@app.route("/accountall")
+@app.route("/account/all")
 def get_all():
     acc_list = User.query.all()
     if len(acc_list):

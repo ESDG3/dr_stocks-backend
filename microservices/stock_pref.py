@@ -22,7 +22,8 @@ class Stock_Pref(db.Model):
         "accID": self.accID, 
         "stock_Industry": self.stock_Industry}
 
-@app.route("/stock_prefall")
+#GET
+@app.route("/stock_pref/all")
 def get_all():
     stock_pref_list = Stock_Pref.query.all()
     if len(stock_pref_list):
@@ -30,7 +31,7 @@ def get_all():
             {
                 "code": 200,
                 "data": {
-                    "users": [stock_pref.json() for stock_pref in stock_pref_list]
+                    "stock preferences": [stock_pref.json() for stock_pref in stock_pref_list]
                 }
             }
         )
@@ -54,11 +55,12 @@ def find_by_accID(accID):
     return jsonify(
         {
             "code": 404,
-            "message": "User not found."
+            "message": "Stock preferences not found."
         }
     ), 404
 
 
+#POST
 @app.route("/stock_pref/<string:accID>/<string:stock_Industry>", methods=['POST'])
 def create_stock_pref(accID, stock_Industry):
     if (Stock_Pref.query.filter_by(accID=accID, stock_Industry=stock_Industry).first()):
@@ -69,12 +71,11 @@ def create_stock_pref(accID, stock_Industry):
                     "accID": accID,
                     "stock_Industry": stock_Industry
                 },
-                "message": "Stock Preference already exists."
+                "message": "Stock preference already exists."
             }
         ), 400
 
     stock_pref = Stock_Pref(stock_PrefID='',accID=accID, stock_Industry = stock_Industry)
-
     try:
         db.session.add(stock_pref)
         db.session.commit()
@@ -94,9 +95,38 @@ def create_stock_pref(accID, stock_Industry):
                     "accID": accID,
                     "stock_Industry": stock_Industry
                 },
-                "message": "An error occurred creating the book."
+                "message": "An error occurred adding the stock preference."
             }
         ), 500
+
+
+#DELETE
+@app.route("/stock_pref/<string:accID>/<string:stock_Industry>", methods=['DELETE'])
+def delete_stock_pref(accID, stock_Industry):
+    stock_pref = Stock_Pref.query.filter_by(accID=accID, stock_Industry=stock_Industry).first()
+    if stock_pref:
+        db.session.delete(stock_pref)
+        db.session.commit()
+        return jsonify(
+            {
+                "code": 200,
+                "data": {
+                    "accID": accID,
+                    "stock_Industry": stock_Industry
+                },
+                "message": "Stock preference successfully deleted."
+            }
+        )
+    return jsonify(
+        {
+            "code": 404,
+            "data": {
+                "accID": accID,
+                "stock_Industry": stock_Industry
+            },
+            "message": "Stock preference not found."
+        }
+    ), 404
 
 if __name__ == '__main__':
     app.run(port=5000, debug=True)
