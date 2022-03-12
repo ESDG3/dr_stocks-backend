@@ -58,5 +58,45 @@ def find_by_accID(accID):
         }
     ), 404
 
+
+@app.route("/stock_pref/<string:accID>/<string:stock_Industry>", methods=['POST'])
+def create_stock_pref(accID, stock_Industry):
+    if (Stock_Pref.query.filter_by(accID=accID, stock_Industry=stock_Industry).first()):
+        return jsonify(
+            {
+                "code": 400,
+                "data": {
+                    "accID": accID,
+                    "stock_Industry": stock_Industry
+                },
+                "message": "Stock Preference already exists."
+            }
+        ), 400
+
+    stock_pref = Stock_Pref(stock_PrefID='',accID=accID, stock_Industry = stock_Industry)
+
+    try:
+        db.session.add(stock_pref)
+        db.session.commit()
+        return jsonify(
+            {
+                "code": 200,
+                "data": {
+                    "message": "Stock preference successfully added"
+                }
+            }
+        )
+    except:
+        return jsonify(
+            {
+                "code": 500,
+                "data": {
+                    "accID": accID,
+                    "stock_Industry": stock_Industry
+                },
+                "message": "An error occurred creating the book."
+            }
+        ), 500
+
 if __name__ == '__main__':
     app.run(port=5000, debug=True)
