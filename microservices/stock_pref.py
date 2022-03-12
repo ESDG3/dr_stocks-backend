@@ -61,72 +61,138 @@ def find_by_accID(accID):
 
 
 #POST
-@app.route("/stock_pref/<string:accID>/<string:stock_Industry>", methods=['POST'])
-def create_stock_pref(accID, stock_Industry):
-    if (Stock_Pref.query.filter_by(accID=accID, stock_Industry=stock_Industry).first()):
-        return jsonify(
-            {
-                "code": 400,
-                "data": {
-                    "accID": accID,
-                    "stock_Industry": stock_Industry
-                },
-                "message": "Stock preference already exists."
-            }
-        ), 400
+@app.route("/stock_pref/add/<string:accID>", methods=['POST'])
+def create_stock_pref(accID):
+    #Variables
+    to_add_list, added_list, success_list, error_list  = [], [], [], []
+    senddata = request.get_json()
 
-    stock_pref = Stock_Pref(stock_PrefID='',accID=accID, stock_Industry = stock_Industry)
-    try:
-        db.session.add(stock_pref)
-        db.session.commit()
+    #Check if accID matches
+    if (str(accID) != str(senddata['AccID'])):
         return jsonify(
             {
-                "code": 200,
-                "data": {
-                    "message": "Stock preference successfully added"
-                }
+                "code": 401,
+                "message": "Unauthroised action performed by user."
             }
         )
-    except:
+    #Loop thru items in preferences
+    for stock_Industry in senddata['Stock_Industry']:
+        if (Stock_Pref.query.filter_by(accID=accID, stock_Industry=stock_Industry).first()):
+            added_list.append(stock_Industry)
+        else:
+            to_add_list.append(stock_Industry)
+    #If there is an item in preference that is added before, return
+    if len(added_list):
+        return jsonify(
+                {
+                    "code": 400,
+                    "data": {
+                        "accID": accID,
+                        "stock_Industry": added_list
+                    },
+                    "message": "Stock(s) preference already exists. Please remove added stock(s) preference"
+                }
+            ), 400
+    #Loop thru items in to_add_list
+    for stock_Industry in to_add_list:
+        try:
+            stock_pref = Stock_Pref(stock_PrefID='',accID=accID, stock_Industry = stock_Industry)
+            db.session.add(stock_pref)
+            db.session.commit()
+            success_list.append(stock_Industry)
+        except:
+            error_list.append(stock_Industry)
+    
+    #If there are errors and success items, delete success list and try all again
+    if (len(error_list)) and (len(success_list)):
+        #delete success_list
+        for success in success_list:
+            stock_pref = Stock_Pref.query.filter_by(accID=accID, stock_Industry=success).first()
+            db.session.delete(stock_pref)
+            db.session.commit()
         return jsonify(
             {
                 "code": 500,
                 "data": {
                     "accID": accID,
-                    "stock_Industry": stock_Industry
+                    "stock_Industry": error_list
+                },
+                "message": "An error occurred adding the stock(s) preference. Please try adding the same preferences again."
+            }
+        ), 500
+    #If all have errors
+    elif (len(error_list)) and (not len(success_list)):
+        return jsonify(
+            {
+                "code": 500,
+                "data": {
+                    "accID": accID,
+                    "stock_Industry": error_list
                 },
                 "message": "An error occurred adding the stock preference."
             }
         ), 500
+    #If all successfully added
+    else:
+        return jsonify(
+            {
+                "code": 200,
+                "data":{
+                    "accID": accID,
+                    "stock_Industry": success_list
+                },
+                "message": "Stock preference successfully added"
+            }
+        )
 
 
 #DELETE
-@app.route("/stock_pref/<string:accID>/<string:stock_Industry>", methods=['DELETE'])
-def delete_stock_pref(accID, stock_Industry):
-    stock_pref = Stock_Pref.query.filter_by(accID=accID, stock_Industry=stock_Industry).first()
-    if stock_pref:
-        db.session.delete(stock_pref)
-        db.session.commit()
+@app.route("/stock_pref/remove/<string:accID>", methods=['DELETE'])
+def delete_stock_pref(accID):
+    #Variables
+    deleted_list, error_list = [], []
+    senddata = request.get_json()
+
+    #Check if accID matches
+    if (str(accID) != str(senddata['AccID'])):
+        return jsonify(
+            {
+                "code": 401,
+                "message": "Unauthroised action performed by user."
+            }
+        )
+    #Loop thru items in preferences
+    for stock_Industry in senddata["Stock_Industry"]:
+        stock_pref = Stock_Pref.query.filter_by(accID=accID, stock_Industry=stock_Industry).first()
+        if stock_pref:
+            db.session.delete(stock_pref)
+            db.session.commit()
+            deleted_list.append(stock_Industry)
+        else:
+            #If error occured
+            error_list.append(stock_Industry)
+            return jsonify(
+                {
+                    "code": 404,
+                    "data": {
+                        "accID": accID,
+                        "stock_Industry": stock_Industry
+                    },
+                    "message": "Stock preference not found."
+                }
+            ), 404
+    #If successfully deleted
+    if len(deleted_list):
         return jsonify(
             {
                 "code": 200,
                 "data": {
                     "accID": accID,
-                    "stock_Industry": stock_Industry
+                    "stock_Industry": deleted_list
                 },
                 "message": "Stock preference successfully deleted."
             }
         )
-    return jsonify(
-        {
-            "code": 404,
-            "data": {
-                "accID": accID,
-                "stock_Industry": stock_Industry
-            },
-            "message": "Stock preference not found."
-        }
-    ), 404
 
 if __name__ == '__main__':
     app.run(port=5000, debug=True)
