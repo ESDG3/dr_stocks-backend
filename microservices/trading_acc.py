@@ -32,7 +32,7 @@ def get_all():
             {
                 "code": 200,
                 "data": {
-                    "users": [trading_acc.json() for trading_acc in trading_acc_list]
+                    "trading_accounts": [trading_acc.json() for trading_acc in trading_acc_list]
                 }
             }
         )
@@ -59,6 +59,7 @@ def find_by_accID(accID):
             "message": "Trading account not found."
         }
     ), 404
+
 
 #POST
 @app.route("/trading_acc/create/<string:accID>", methods=['POST'])
