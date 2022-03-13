@@ -20,10 +20,11 @@ def get_stock_info():
 
     # Send an HTTP POST request to /mail/send
     response = sg.client.mail.send.post(request_body=mail_json)
+    res = str(response.headers).split("\n")
     return jsonify(
         {
             "code":str(response.status_code),
-            "data":str(response.headers)
+            "data":res
         }
     )
 
