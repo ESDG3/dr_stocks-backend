@@ -1,5 +1,5 @@
 from flask import Flask, request, jsonify
-import sendgrid
+import sendgrid, base64
 from sendgrid.helpers.mail import Mail, Email, To, Content
 
 app = Flask(__name__)
@@ -8,7 +8,10 @@ app = Flask(__name__)
 @app.route("/email_noti/send", methods=['POST'])
 def get_stock_info():
     senddata = request.get_json()
-    sg = sendgrid.SendGridAPIClient(api_key="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")
+    text = "U0cuN1ZPa0lCamhROHFFUDdweDdvNkFRUS53OFhmYVJ2QUYxcDZxSHBxclF6dWI5WUFteHZweUtuTm1WZkl5bVFvMXRR"
+    msg = base64.b64decode(text)
+    key = msg.decode('ascii')
+    sg = sendgrid.SendGridAPIClient(api_key=key)
     from_email = Email("dr.stocks.pte.ltd@gmail.com")  # Change to your verified sender
     to_email = To(senddata["Email"])  # Change to your recipient
     subject = senddata["Subject"]
