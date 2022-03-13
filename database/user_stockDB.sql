@@ -13,3 +13,10 @@ CREATE TABLE IF NOT EXISTS `user_stock` (
   `Currency` CHAR(3) NOT NULL,
   PRIMARY KEY (`User_StockID`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+INSERT INTO `user_stock` (`User_StockID`, `AccID`, `TradeID`,`Stock_Symbol`, `Stock_Quantity`, `Purchased_Price`, `Currency`) VALUES
+('5000001', '1000001', '6000001','AAPL', '1', '154.73', 'USD'),
+('5000002', '1000002', '6000002','AMD', '1', '104.29', 'USD');
+COMMIT;
+
+select * from user_stockDB.user_stock;

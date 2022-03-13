@@ -18,4 +18,4 @@ INSERT INTO `stock_pref` (`Stock_PrefID`, `AccID`, `Stock_Industry`) VALUES
 ('3000005', '1000002', 'Materials');
 COMMIT;
 
---select * from stock_prefDB.stock_pref;
+select * from stock_prefDB.stock_pref;

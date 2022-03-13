@@ -7,13 +7,14 @@ CREATE TABLE IF NOT EXISTS `trading_acc` (
   `Trade_AccID` INT NOT NULL AUTO_INCREMENT,
   `AccID` INT NOT NULL,
   `Trade_Acc_Balance` DECIMAL(13, 2) NOT NULL,
+  `Currency` CHAR(3) NOT NULL,
   PRIMARY KEY (`Trade_AccID`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 
-INSERT INTO `trading_acc` (`Trade_AccID`, `AccID`, `Trade_Acc_Balance`) VALUES
-('4000001', '1000001', '1000.00'),
-('4000002', '1000002', '500.00');
+INSERT INTO `trading_acc` (`Trade_AccID`, `AccID`, `Trade_Acc_Balance`, `Currency`) VALUES
+('4000001', '1000001', '1000.00', 'USD'),
+('4000002', '1000002', '500.00', 'USD');
 COMMIT;
 
---select * from trading_accDB.trading_acc;
+select * from trading_accDB.trading_acc;
