@@ -12,15 +12,18 @@ class Trading_Acc(db.Model):
     trade_AccID = db.Column(db.Integer, primary_key=True, nullable=False)
     accID = db.Column(db.Integer, nullable=False)
     trade_Acc_Balance = db.Column(db.Numeric(13, 2), nullable=False)
-    def __init__(self, trade_AccID, accID, trade_Acc_Balance):
+    currency = db.Column(db.String(3), nullable=False)
+    def __init__(self, trade_AccID, accID, trade_Acc_Balance, currency):
         self.trade_AccID = trade_AccID
         self.accID = accID
         self.trade_Acc_Balance = trade_Acc_Balance
+        self.currency = currency
 
     def json(self):
         return {"trade_AccID": self.trade_AccID, 
         "accID": self.accID, 
-        "trade_Acc_Balance": self.trade_Acc_Balance}
+        "trade_Acc_Balance": self.trade_Acc_Balance,
+        "currency": self.currency}
 
 
 #GET

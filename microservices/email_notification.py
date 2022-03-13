@@ -1,9 +1,8 @@
 from flask import Flask, request, jsonify
-import sendgrid, os
+import sendgrid
 from sendgrid.helpers.mail import Mail, Email, To, Content
 
 app = Flask(__name__)
-
 
 #POST
 @app.route("/email_noti/send", methods=['POST'])
