@@ -7,7 +7,7 @@ app = Flask(__name__)
 def get_stock_info(stock_symbol):
     text = "YzhtNWZrYWFkM2k5aHVjcDk4NzA="
     msg = base64.b64decode(text)
-    key = msg.decode('ascii')
+    key = str(msg.decode('ascii'))
     finnhub_client = finnhub.Client(api_key=key)
     return finnhub_client.quote(stock_symbol)
     
