@@ -77,6 +77,7 @@ def create_stock_pref(accID):
         )
     #Loop thru items in preferences
     for stock_Industry in senddata['Stock_Industry']:
+        stock_Industry = str(stock_Industry).capitalize()
         if (Stock_Pref.query.filter_by(accID=accID, stock_Industry=stock_Industry).first()):
             added_list.append(stock_Industry)
         else:
@@ -95,6 +96,7 @@ def create_stock_pref(accID):
             ), 400
     #Loop thru items in to_add_list
     for stock_Industry in to_add_list:
+        stock_Industry = str(stock_Industry).capitalize()
         try:
             stock_pref = Stock_Pref(stock_PrefID='',accID=accID, stock_Industry = stock_Industry)
             db.session.add(stock_pref)
@@ -163,6 +165,7 @@ def delete_stock_pref(accID):
         )
     #Loop thru items in preferences
     for stock_Industry in senddata["Stock_Industry"]:
+        stock_Industry = str(stock_Industry).capitalize()
         stock_pref = Stock_Pref.query.filter_by(accID=accID, stock_Industry=stock_Industry).first()
         if stock_pref:
             db.session.delete(stock_pref)

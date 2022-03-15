@@ -85,7 +85,7 @@ def buying_user_stock(accID):
             }
         )
     try:
-        user_stock = User_Stock(user_StockID="",accID=accID, tradeID=senddata["TradeID"], stock_Symbol=senddata["Stock_Symbol"], stock_Quantity=senddata["Stock_Quantity"], purchased_Price=senddata["Purchased_Price"], currency=senddata["Currency"])
+        user_stock = User_Stock(user_StockID="",accID=accID, tradeID=senddata["TradeID"], stock_Symbol=str(senddata["Stock_Symbol"]).upper(), stock_Quantity=senddata["Stock_Quantity"], purchased_Price=senddata["Purchased_Price"], currency=str(senddata["Currency"]).upper())
         db.session.add(user_stock)
         db.session.commit()
     except:
