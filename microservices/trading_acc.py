@@ -69,6 +69,14 @@ def find_by_accID(accID, currency):
 @app.route("/trading_acc/create/<string:accID>", methods=['POST'])
 def create_trading_acc(accID):
     senddata = request.get_json()
+    #Check if accID matches
+    if (str(accID) != str(senddata['AccID'])):
+        return jsonify(
+            {
+                "code": 401,
+                "message": "Unauthroised action performed by user."
+            }
+        )
     currency = str(senddata["Currency"]).upper()
     result = Trading_Acc.query.filter_by(accID=accID, currency=currency).first()
     if result:
@@ -113,6 +121,14 @@ def create_trading_acc(accID):
 @app.route("/trading_acc/update/<string:accID>", methods=['PUT'])
 def update_book(accID):
     senddata = request.get_json()
+    #Check if accID matches
+    if (str(accID) != str(senddata['AccID'])):
+        return jsonify(
+            {
+                "code": 401,
+                "message": "Unauthroised action performed by user."
+            }
+        )
     currency = str(senddata['Currency']).upper()
     new_amt = senddata['Trade_Acc_Balance']
     if "." not in str(new_amt):
@@ -154,7 +170,6 @@ def update_book(accID):
 @app.route("/trading_acc/delete/<string:accID>", methods=['DELETE'])
 def delete_trading_acc(accID):
     senddata = request.get_json()
-    currency = str(senddata["Currency"]).upper()
     #Check if accID matches
     if (str(accID) != str(senddata['AccID'])):
         return jsonify(
@@ -163,6 +178,7 @@ def delete_trading_acc(accID):
                 "message": "Unauthroised action performed by user."
             }
         )
+    currency = str(senddata["Currency"]).upper()
     trading_acc = Trading_Acc.query.filter_by(accID=accID, currency=currency).first()
     trading_acc_id = trading_acc.trade_AccID
     try:
