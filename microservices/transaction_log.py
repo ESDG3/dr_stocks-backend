@@ -91,7 +91,7 @@ def create_trade_log(accID):
     now = datetime.now()
     current_time = now.strftime("%Y-%m-%d %H:%M:%S")
     try:
-        trans_log = Trans_Log(transactionID="",accID=accID, trade_AccID=senddata["Trade_AccID"], transaction_Action=senddata["Transaction_Action"], transaction_Value=senddata["Transaction_Value"], transaction_Date=current_time, currency=senddata["Currency"])
+        trans_log = Trans_Log(transactionID="",accID=accID, trade_AccID=senddata["Trade_AccID"], transaction_Action=str(senddata["Transaction_Action"]).upper(), transaction_Value=senddata["Transaction_Value"], transaction_Date=current_time, currency= str(senddata["Currency"]).upper())
         db.session.add(trans_log)
         db.session.commit()
     except:

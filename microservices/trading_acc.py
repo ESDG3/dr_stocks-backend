@@ -1,3 +1,4 @@
+from locale import currency
 from flask import Flask, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
@@ -50,9 +51,9 @@ def get_all():
         }
     ), 404
 
-@app.route("/trading_acc/<string:accID>")
-def find_by_accID(accID):
-    trading_acc = Trading_Acc.query.filter_by(accID=accID).first()
+@app.route("/trading_acc/<string:accID>/<string:currency>")
+def find_by_accID(accID, currency):
+    trading_acc = Trading_Acc.query.filter_by(accID=accID, currency=currency).first()
     if trading_acc:
         return jsonify(
             {
@@ -71,21 +72,31 @@ def find_by_accID(accID):
 #POST
 @app.route("/trading_acc/create/<string:accID>", methods=['POST'])
 def create_trading_acc(accID):
-    if (Trading_Acc.query.filter_by(accID=accID).first()):
-        temp = Trading_Acc.query.filter_by(accID=accID).first()
-        trade_acc_ID = temp.json()['trade_AccID']
+    senddata = request.get_json()
+    #Check if accID matches
+    if (str(accID) != str(senddata['AccID'])):
+        return jsonify(
+            {
+                "code": 401,
+                "message": "Unauthroised action performed by user."
+            }
+        )
+    currency = str(senddata["Currency"]).upper()
+    result = Trading_Acc.query.filter_by(accID=accID, currency=currency).first()
+    if result:
+        trade_acc_ID = result.json()['trade_AccID']
         return jsonify(
             {
                 "code": 400,
                 "data": {
                     "trade_acc_ID": trade_acc_ID,
-                    "accID": accID
+                    "accID": accID,
+                    "currency": currency
                 },
                 "message": "Trading account already exists."
             }
         ), 400
-
-    trading_acc = Trading_Acc(trade_AccID='',accID=accID, trade_Acc_Balance = 0.0)
+    trading_acc = Trading_Acc(trade_AccID='',accID=accID, trade_Acc_Balance = 0.0, currency=currency)
     try:
         db.session.add(trading_acc)
         db.session.commit()
@@ -107,6 +118,7 @@ def create_trading_acc(accID):
                 "message": "An error occurred creating a trading account."
             }
         ), 500
+
 
 
 #PUT
@@ -153,6 +165,47 @@ def update_book(accID):
             "message": "Trading account not found."
         }
     ), 404
+
+
+
+
+#DELETE
+@app.route("/trading_acc/delete/<string:accID>", methods=['DELETE'])
+def delete_trading_acc(accID):
+    senddata = request.get_json()
+    #Check if accID matches
+    if (str(accID) != str(senddata['AccID'])):
+        return jsonify(
+            {
+                "code": 401,
+                "message": "Unauthroised action performed by user."
+            }
+        )
+    currency = str(senddata["Currency"]).upper()
+    trading_acc = Trading_Acc.query.filter_by(accID=accID, currency=currency).first()
+    trading_acc_id = trading_acc.trade_AccID
+    try:
+        db.session.delete(trading_acc)
+        db.session.commit()
+        return jsonify(
+            {
+                "code": 200,
+                "data": {
+                    "message": "Trading account successfully deleted",
+                    "Trading_acc_id": trading_acc_id
+                }
+            }
+        )
+    except:
+        return jsonify(
+            {
+                "code": 500,
+                "data": {
+                    "Trading_acc_id": trading_acc_id
+                },
+                "message": "An error occurred deleting trading account."
+            }
+        ), 500
 
 
 if __name__ == '__main__':

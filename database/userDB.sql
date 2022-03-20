@@ -17,3 +17,5 @@ INSERT INTO `user` (`AccID`, `Trad_AccID`, `Name`, `Birthdate`, `Email`, `Passwo
 ('1000001', '2000001', 'John Mark', '1992-06-15', 'johnmark@gmail.com','temp'),
 ('1000002', '2000002', 'Mary Esther', '1994-12-03', 'maryesther@gmail.com','temp1');
 COMMIT;
+
+select * from userDB.user;
