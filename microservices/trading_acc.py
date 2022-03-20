@@ -1,9 +1,13 @@
 from flask import Flask, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
+from flask_cors import CORS
+import decimal
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+mysqlconnector://root@localhost:3306/trading_accDB'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+CORS(app)
 
 db = SQLAlchemy(app)
 
@@ -110,27 +114,36 @@ def create_trading_acc(accID):
 def update_book(accID):
     trading_acc = Trading_Acc.query.filter_by(accID=accID).first()
     if trading_acc:
-
         senddata = request.get_json()
         if (senddata['Trade_AccID'] == trading_acc.trade_AccID) and (senddata['AccID'] == trading_acc.accID):
-            trading_acc.trade_Acc_Balance = senddata['Trade_Acc_Balance']
-        try:    
-            db.session.commit()
+            if trading_acc.trade_Acc_Balance >= senddata['stock_price'] * senddata['stockQty']: #check balance 
+                trading_acc.trade_Acc_Balance -= decimal.Decimal(senddata['stock_price']) * decimal.Decimal(senddata['stockQty'])
+                try:    
+                    db.session.commit()
+                    return jsonify(
+                        {
+                            "code": 200,
+                            "data": trading_acc.json(),
+                            "message": "Successfully updated trading account balance."
+                        }
+                    )
+                except:
+                    return jsonify(
+                        {
+                            "code": 500,
+                            "data": trading_acc.json(),
+                            "message": "An error occurred updating account balance. No changes has been made."
+                        }
+                    )
             return jsonify(
                 {
-                    "code": 200,
-                    "data": trading_acc.json(),
-                    "message": "Successfully updated trading account balance."
-                }
-            )
-        except:
-            return jsonify(
-                {
-                    "code": 500,
-                    "data": trading_acc.json(),
-                    "message": "An error occurred updating account balance. No changes has been made."
-                }
-            )
+            "code": 400,
+            "data": {
+                "accID": accID
+            },
+            "message": "Insufficient balance in trading account. Please top up"
+        }
+    ), 404
     return jsonify(
         {
             "code": 404,
@@ -143,7 +156,7 @@ def update_book(accID):
 
 
 if __name__ == '__main__':
-    app.run(port=5000, debug=True)
+    app.run(port=5004, debug=True)
 
 
 

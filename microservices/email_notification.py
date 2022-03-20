@@ -1,8 +1,10 @@
 from flask import Flask, request, jsonify
 import sendgrid, base64
 from sendgrid.helpers.mail import Mail, Email, To, Content
+from flask_cors import CORS
 
 app = Flask(__name__)
+CORS(app)
 
 #POST
 @app.route("/email_noti/send", methods=['POST'])

@@ -1,9 +1,12 @@
 from flask import Flask, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
+from flask_cors import CORS
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+mysqlconnector://root@localhost:3306/userDB'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+CORS(app)
 
 db = SQLAlchemy(app)
 
@@ -46,11 +49,11 @@ def get_all():
     return jsonify(
         {
             "code": 404,
-            "message": "There are no users."
+            "message": "There is no user."
         }
     ), 404
 
-@app.route("/account/<string:accID>")
+@app.route("/account/accID/<string:accID>")
 def find_by_accID(accID):
     user = User.query.filter_by(accID=accID).first()
     if user:
@@ -67,5 +70,22 @@ def find_by_accID(accID):
         }
     ), 404
 
+@app.route("/account/email/<string:email>")
+def find_by_accID(email):
+    user = User.query.filter_by(email=email).first()
+    if user:
+        return jsonify(
+            {
+                "code": 200,
+                "data": user.json()
+            }
+        )
+    return jsonify(
+        {
+            "code": 404,
+            "message": "User not found."
+        }
+    ), 404
+
 if __name__ == '__main__':
-    app.run(port=5000, debug=True)
+    app.run(port=5006, debug=True)

@@ -1,12 +1,15 @@
 from flask import Flask, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
+from flask_cors import CORS
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+mysqlconnector://root@localhost:3306/trade_logDB'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
+
+CORS(app)
 
 class Trade_Log(db.Model):
     __tablename__ = 'trade_log'
@@ -54,7 +57,7 @@ def get_all():
     return jsonify(
         {
             "code": 404,
-            "message": "There are no trade activity."
+            "message": "There is no trade activity."
         }
     ), 404
 
@@ -71,7 +74,7 @@ def find_by_accID(accID):
     return jsonify(
         {
             "code": 404,
-            "message": "There are no trade activity."
+            "message": "There is no trade activity."
         }
     ), 404
 
@@ -84,7 +87,7 @@ def create_trade_log(accID):
         return jsonify(
             {
                 "code": 401,
-                "message": "Unauthroised action performed by user."
+                "message": "Unauthorised action performed by user."
             }
         )
     now = datetime.now()
@@ -118,4 +121,4 @@ def create_trade_log(accID):
     )
 
 if __name__ == '__main__':
-    app.run(port=5000, debug=True)
+    app.run(port=5003, debug=True)
