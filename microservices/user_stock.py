@@ -1,9 +1,12 @@
 from flask import Flask, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
+from flask_cors import CORS
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+mysqlconnector://root@localhost:3306/user_stockDB'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+CORS(app)
 
 db = SQLAlchemy(app)
 
@@ -50,7 +53,7 @@ def get_all():
     return jsonify(
         {
             "code": 404,
-            "message": "There are no user stocks."
+            "message": "No such stock found."
         }
     ), 404
 
@@ -67,7 +70,7 @@ def find_by_accID(accID):
     return jsonify(
         {
             "code": 404,
-            "message": "User stocks not found."
+            "message": "No such stock found."
         }
     ), 404
 
@@ -81,7 +84,7 @@ def buying_user_stock(accID):
         return jsonify(
             {
                 "code": 401,
-                "message": "Unauthroised action performed by user."
+                "message": "Unauthorised action performed by user."
             }
         )
     try:
@@ -154,4 +157,4 @@ def selling_user_stock(accID):
 
 
 if __name__ == '__main__':
-    app.run(port=5000, debug=True)
+    app.run(port=5007, debug=True)
