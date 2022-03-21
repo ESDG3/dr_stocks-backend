@@ -53,22 +53,22 @@ def get_all():
         }
     ), 404
 
-@app.route("/account/accID/<string:accID>")
-def find_by_accID(accID):
-    user = User.query.filter_by(accID=accID).first()
-    if user:
-        return jsonify(
-            {
-                "code": 200,
-                "data": user.json()
-            }
-        )
-    return jsonify(
-        {
-            "code": 404,
-            "message": "User not found."
-        }
-    ), 404
+# @app.route("/account/accID/<string:accID>")
+# def find_by_accID(accID):
+#     user = User.query.filter_by(accID=accID).first()
+#     if user:
+#         return jsonify(
+#             {
+#                 "code": 200,
+#                 "data": user.json()
+#             }
+#         )
+#     return jsonify(
+#         {
+#             "code": 404,
+#             "message": "User not found."
+#         }
+#     ), 404
 
 @app.route("/account/email/<string:email>")
 def find_by_accID(email):

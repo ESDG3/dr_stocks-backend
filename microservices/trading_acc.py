@@ -110,8 +110,8 @@ def create_trading_acc(accID):
 
 
 #PUT
-@app.route("/trading_acc/<string:accID>", methods=['PUT'])
-def update_book(accID):
+@app.route("/trading_acc/minus/<string:accID>", methods=['PUT'])
+def minus_amount(accID):
     trading_acc = Trading_Acc.query.filter_by(accID=accID).first()
     if trading_acc:
         senddata = request.get_json()
@@ -144,6 +144,40 @@ def update_book(accID):
             "message": "Insufficient balance in trading account. Please top up"
         }
     ), 404
+    return jsonify(
+        {
+            "code": 404,
+            "data": {
+                "accID": accID
+            },
+            "message": "Trading account not found."
+        }
+    ), 404
+
+@app.route("/trading_acc/plus/<string:accID>", methods=['PUT'])
+def plus_amount(accID):
+    trading_acc = Trading_Acc.query.filter_by(accID=accID).first()
+    if trading_acc:
+        senddata = request.get_json()
+        if (senddata['Trade_AccID'] == trading_acc.trade_AccID) and (senddata['AccID'] == trading_acc.accID):
+            trading_acc.trade_Acc_Balance += decimal.Decimal(senddata["Amount"])
+            try:    
+                db.session.commit()
+                return jsonify(
+                    {
+                        "code": 200,
+                        "data": trading_acc.json(),
+                        "message": "Successfully updated trading account balance."
+                    }
+                )
+            except:
+                return jsonify(
+                    {
+                        "code": 500,
+                        "data": trading_acc.json(),
+                        "message": "An error occurred updating account balance. No changes has been made."
+                    }
+                )
     return jsonify(
         {
             "code": 404,
