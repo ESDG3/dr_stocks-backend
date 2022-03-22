@@ -53,6 +53,7 @@ def get_all():
         }
     ), 404
 
+# To be deleted since we are only using email
 # @app.route("/account/accID/<string:accID>")
 # def find_by_accID(accID):
 #     user = User.query.filter_by(accID=accID).first()

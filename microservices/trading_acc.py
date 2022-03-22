@@ -78,7 +78,7 @@ def create_trading_acc(accID):
         return jsonify(
             {
                 "code": 401,
-                "message": "Unauthroised action performed by user."
+                "message": "Unauthorised action performed by user."
             }
         )
     currency = str(senddata["Currency"]).upper()
@@ -121,9 +121,9 @@ def create_trading_acc(accID):
 
 
 
-#PUT
+#PUT (Minus)
 @app.route("/trading_acc/minus/<string:accID>", methods=['PUT'])
-def minus_amount(accID):
+def minus(accID):
     trading_acc = Trading_Acc.query.filter_by(accID=accID).first()
     if trading_acc:
         senddata = request.get_json()
@@ -166,13 +166,14 @@ def minus_amount(accID):
         }
     ), 404
 
+#Put (Plus)
 @app.route("/trading_acc/plus/<string:accID>", methods=['PUT'])
-def plus_amount(accID):
+def plus(accID):
     trading_acc = Trading_Acc.query.filter_by(accID=accID).first()
     if trading_acc:
         senddata = request.get_json()
         if (senddata['Trade_AccID'] == trading_acc.trade_AccID) and (senddata['AccID'] == trading_acc.accID):
-            trading_acc.trade_Acc_Balance += decimal.Decimal(senddata["Amount"])
+            trading_acc.trade_Acc_Balance += decimal.Decimal(senddata['Amount'])
             try:    
                 db.session.commit()
                 return jsonify(
@@ -190,6 +191,7 @@ def plus_amount(accID):
                         "message": "An error occurred updating account balance. No changes has been made."
                     }
                 )
+
     return jsonify(
         {
             "code": 404,
@@ -201,8 +203,6 @@ def plus_amount(accID):
     ), 404
 
 
-
-
 #DELETE
 @app.route("/trading_acc/delete/<string:accID>", methods=['DELETE'])
 def delete_trading_acc(accID):
@@ -212,7 +212,7 @@ def delete_trading_acc(accID):
         return jsonify(
             {
                 "code": 401,
-                "message": "Unauthroised action performed by user."
+                "message": "Unauthorised action performed by user."
             }
         )
     currency = str(senddata["Currency"]).upper()
