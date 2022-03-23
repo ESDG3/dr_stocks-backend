@@ -56,32 +56,19 @@ def processDeposit(deposit):
     # 3. Retrieve the amount trader has 
     # Invoke the user info microservice
     print('\n-----Invoking user info microservice-----')
-    print(deposit)
-    new_user_info_URL = user_info_URL + "/" + deposit["email"]
+    new_user_info_URL = user_info_URL + '/' + deposit["email"]
     user_info = invoke_http(new_user_info_URL, method='GET')
-    
-    update_deposit = ({
-        "AccID" : user_info["data"]["accID"],
-        "Trade_AccID" : deposit["trad_AccID"], #suppose to be user_info need to update db
-        "Amount" : deposit["Amount"],
-        "Currency" : deposit["Currency"]
-    })
+
     # 5. Update amount deposited 
     # Invoke trading account microservice
     print('\n-----Invoking trading account microservice-----')
-    new_trading_acc_URL = trading_acc_URL + "/" + str(user_info["data"]["accID"]) 
-    deposit_result = invoke_http(new_trading_acc_URL, method='PUT',json= update_deposit)
+    new_trading_acc_URL = trading_acc_URL + '/' + str(user_info["data"]["accID"]) 
+    deposit_result = invoke_http(new_trading_acc_URL, method='PUT',json= [user_info, deposit])
     print('deposit_result:', deposit_result)
-    
-    deposit_log = ({
-        "AccID" : deposit_result["data"]["accID"],
-        "Trade_AccID" : deposit_result["data"]["trade_AccID"],
-        "trade_Acc_Balance" : deposit_result["data"]["trade_Acc_Balance"]
-    })
 
     # Check the deposit result; if a failure, send it to the error microservice.
     code = deposit_result["code"]
-    message = json.dumps(deposit_log)
+    message = json.dumps(deposit_result)
 
     if code not in range(200,300):
         # Inform the error microservice
@@ -101,7 +88,7 @@ def processDeposit(deposit):
         # 9. Return error
         return {
             "code": 500,
-            "data": {"deposit_log": deposit_log},
+            "data": {"deposit_log": deposit_result},
             "message": "Deposit action failure sent for error handling."
         }
 
@@ -132,7 +119,7 @@ def processDeposit(deposit):
     # 9. Return confirmation of deposit
     return {
         "code": 201,
-        "data": {"deposit_log": deposit_log}
+        "data": {"deposit_log": deposit_result}
     }
 
 if __name__ == '__main__':

@@ -175,9 +175,10 @@ def minus(accid):
 def plus(accid):
     trading_acc = Trading_Acc.query.filter_by(accid=accid).first()
     if trading_acc:
-        senddata = request.get_json()
-        if (senddata['trade_accid'] == trading_acc.trade_accid) and (senddata['accid'] == trading_acc.accid):
-            trading_acc.trade_acc_balance += decimal.Decimal(senddata['amount'])
+        user_info = request.get_json()[0]["data"]
+        deposit = request.get_json()[1]
+        if (user_info['trade_accid'] == trading_acc.trade_accid) and (user_info['accid'] == trading_acc.accid):
+            trading_acc.trade_acc_balance += decimal.Decimal(deposit['amount'])
             try:    
                 db.session.commit()
                 return jsonify(
