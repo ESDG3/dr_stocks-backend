@@ -20,7 +20,7 @@ connection = pika.BlockingConnection(
 channel = connection.channel()
 # Set up the exchange if the exchange doesn't exist
 # - use a 'topic' exchange to enable interaction
-exchangename="trade_topic"
+exchangename="deposit_topic"
 exchangetype="topic"
 channel.exchange_declare(exchange=exchangename, exchange_type=exchangetype, durable=True)
     # 'durable' makes the exchange survive broker restarts
@@ -29,7 +29,7 @@ channel.exchange_declare(exchange=exchangename, exchange_type=exchangetype, dura
 # - instead of setting up the queues using RabbitMQ UI.
 
 ############   Error queue   #############
-#declare Error queue
+#delcare Error queue
 queue_name = 'Error'
 channel.queue_declare(queue=queue_name, durable=True) 
     # 'durable' makes the queue survive broker restarts
@@ -39,18 +39,39 @@ channel.queue_bind(exchange=exchangename, queue=queue_name, routing_key='*.error
     # bind the queue to the exchange via the key
     # any routing_key with two words and ending with '.error' will be matched
 
-############   Activity_Log queue    #############
-#declare Activity_Log queue
-# queue_name = 'Activity_Log'
-# channel.queue_declare(queue=queue_name, durable=True)
-#     # 'durable' makes the queue survive broker restarts
+############   Transaction_log queue    #############
+#delcare Transaction_log queue
+queue_name = 'transaction_log'
+channel.queue_declare(queue=queue_name, durable=True)
+    # 'durable' makes the queue survive broker restarts
 
-# #bind Activity_Log queue
-# channel.queue_bind(exchange=exchangename, queue=queue_name, routing_key='#') 
+#bind Transaction_log queue
+channel.queue_bind(exchange=exchangename, queue=queue_name, routing_key='#') 
     # bind the queue to the exchange via the key
     # 'routing_key=#' => any routing_key would be matched
     
+############   Email_notification queue    #############
+#delcare Email_notification queue
+queue_name = 'email_notification'
+channel.queue_declare(queue=queue_name, durable=True)
+    # 'durable' makes the queue survive broker restarts
 
+#bind Email_notification queue
+channel.queue_bind(exchange=exchangename, queue=queue_name, routing_key='*.log') 
+    # bind the queue to the exchange via the key
+    # any routing_key with two words and ending with '.email' will be matched
+
+
+############   Trade_log queue    #############
+#delcare Trade_log queue
+queue_name = 'trade_log'
+channel.queue_declare(queue=queue_name, durable=True)
+    # 'durable' makes the queue survive broker restarts
+
+#bind Trade_log queue
+channel.queue_bind(exchange=exchangename, queue=queue_name, routing_key='*.trade') 
+    # bind the queue to the exchange via the key
+    # any routing_key with two words and ending with '.trade' will be matched
 """
 This function in this module sets up a connection and a channel to a local AMQP broker,
 and declares a 'topic' exchange to be used by the microservices in the solution.
