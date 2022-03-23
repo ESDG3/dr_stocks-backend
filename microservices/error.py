@@ -10,7 +10,7 @@ monitorBindingKey = '*.error'
 def receiveError():
     amqp_setup.check_setup()
     
-    queue_name = "Error"  
+    queue_name = "error"  
 
     # set up a consumer and start to wait for coming messages
     amqp_setup.channel.basic_consume(queue=queue_name, on_message_callback=callback, auto_ack=True)
