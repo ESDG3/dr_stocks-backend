@@ -10,32 +10,35 @@ CORS(app)
 
 db = SQLAlchemy(app)
 
+
 class User_Stock(db.Model):
     __tablename__ = 'user_stock'
-    user_StockID = db.Column(db.Integer, primary_key=True, nullable=False)
-    accID = db.Column(db.Integer, nullable=False)
-    tradeID = db.Column(db.Integer, nullable=False)
-    stock_Symbol = db.Column(db.String(5), nullable=False)
-    stock_Quantity = db.Column(db.Integer, nullable=False)
-    purchased_Price = db.Column(db.Numeric(13, 2), nullable=False)
+    user_stockid = db.Column(db.Integer, primary_key=True, nullable=False)
+    accid = db.Column(db.Integer, nullable=False)
+    tradeid = db.Column(db.Integer, nullable=False)
+    stock_symbol = db.Column(db.String(5), nullable=False)
+    stock_quantity = db.Column(db.Integer, nullable=False)
+    purchased_price = db.Column(db.Numeric(13, 2), nullable=False)
     currency = db.Column(db.String(3), nullable=False)
-    def __init__(self, user_StockID, accID, tradeID, stock_Symbol, stock_Quantity, purchased_Price, currency):
-        self.user_StockID = user_StockID
-        self.accID = accID
-        self.tradeID = tradeID
-        self.stock_Symbol = stock_Symbol
-        self.stock_Quantity = stock_Quantity
-        self.purchased_Price = purchased_Price
+    def __init__(self, user_stockid, accid, tradeid, stock_symbol, stock_quantity, purchased_price, currency):
+        self.user_stockid = user_stockid
+        self.accid = accid
+        self.tradeid = tradeid
+        self.stock_symbol = stock_symbol
+        self.stock_quantity = stock_quantity
+        self.purchased_price = purchased_price
         self.currency = currency
 
     def json(self):
-        return {"user_StockID": self.user_StockID, 
-        "accID": self.accID, 
-        "tradeID": self.tradeID, 
-        "stock_Symbol": self.stock_Symbol,
-        "stock_Quantity": self.stock_Quantity,
-        "purchased_Price,": self.purchased_Price,
-        "currency": self.currency}
+        return {
+            "user_stockid": self.user_stockid, 
+            "accid": self.accid, 
+            "tradeid": self.tradeid, 
+            "stock_symbol": self.stock_symbol,
+            "stock_quantity": self.stock_quantity,
+            "purchased_price,": self.purchased_price,
+            "currency": self.currency
+        }
 
 #GET
 @app.route("/user_stock/all")
@@ -57,9 +60,9 @@ def get_all():
         }
     ), 404
 
-@app.route("/user_stock/<string:accID>")
-def find_by_accID(accID):
-    user_stock_list = User_Stock.query.filter_by(accID=accID)#.first()
+@app.route("/user_stock/<string:accid>")
+def find_by_accID(accid):
+    user_stock_list = User_Stock.query.filter_by(accid=accid)#.first()
     if user_stock_list:
         return jsonify(
             {
@@ -76,11 +79,13 @@ def find_by_accID(accID):
 
 
 #POST
-@app.route("/user_stock/buy/<string:accID>", methods=['POST'])
-def buying_user_stock(accID):
-    senddata = request.get_json()
+@app.route("/user_stock/buy/<string:accid>", methods=['POST'])
+def buying_user_stock(accid):
+    stock_info = request.get_json()[0]["data"]
+    user_info = request.get_json()[1]["data"]
+    trade = request.get_json()[2]
     #Check if accID matches
-    if (str(accID) != str(senddata['AccID'])):
+    if (str(accid) != str(user_info['accid'])):
         return jsonify(
             {
                 "code": 401,
@@ -88,47 +93,47 @@ def buying_user_stock(accID):
             }
         )
     try:
-        user_stock = User_Stock(user_StockID="",accID=accID, tradeID=senddata["TradeID"], stock_Symbol=str(senddata["Stock_Symbol"]).upper(), stock_Quantity=senddata["Stock_Quantity"], purchased_Price=senddata["Purchased_Price"], currency=str(senddata["Currency"]).upper())
+        user_stock = User_Stock(user_stockid="",accid=accid, tradeid=user_info["trade_accid"], stock_symbol=str(trade["stock_symbol"]).upper(), stock_quantity=trade["stock_quantity"], purchased_price=stock_info["c"], currency=str(trade["currency"]).upper())
         db.session.add(user_stock)
         db.session.commit()
+        
     except:
+        
         return jsonify(
             {
                 "code": 500,
                 "data": {
-                    "accID": accID,
-                    "data": senddata
+                    "accid": accid,
                 },
                 "message": "An error occurred buying user stock(s)."
             }
-        ), 500
+        )
     return jsonify(
             {
                 "code": 200,
                 "data":{
-                    "accID": accID,
-                    "data": senddata
+                    "accid": accid,
                 },
                 "message": "User stock(s) successfully bought"
             }
-        )
+    )
 
 
 #DELETE
-@app.route("/user_stock/sell/<string:accID>", methods=['DELETE'])
-def selling_user_stock(accID):
+@app.route("/user_stock/sell/<string:accid>", methods=['DELETE'])
+def selling_user_stock(accid):
     #Variables
     senddata = request.get_json()
     #Check if accID matches
-    if (str(accID) != str(senddata['AccID'])):
+    if (str(accid) != str(senddata['accid'])):
         return jsonify(
             {
                 "code": 401,
-                "message": "Unauthroised action performed by user."
+                "message": "Unauthorised action performed by user."
             }
         )
     try:
-        user_stock = User_Stock.query.filter_by(accID=accID, tradeID=senddata["TradeID"]).first()
+        user_stock = User_Stock.query.filter_by(accid=accid, tradeid=senddata["tradeid"]).first()
         db.session.delete(user_stock)
         db.session.commit()
     except:
@@ -136,8 +141,7 @@ def selling_user_stock(accID):
             {
                 "code": 500,
                 "data": {
-                    "accID": accID,
-                    "data": senddata
+                    "accid": accid,
                 },
                 "message": "An error occurred selling user stock(s)."
             }
@@ -146,8 +150,7 @@ def selling_user_stock(accID):
             {
                 "code": 200,
                 "data":{
-                    "accID": accID,
-                    "data": senddata
+                    "accid": accid,
                 },
                 "message": "User stock(s) successfully sold"
             }

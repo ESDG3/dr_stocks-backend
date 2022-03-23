@@ -4,13 +4,13 @@ USE `stock_prefDB`;
 # STOCK_PREFDB
 DROP TABLE IF EXISTS `stock_pref`;
 CREATE TABLE IF NOT EXISTS `stock_pref` (
-  `Stock_PrefID` INT NOT NULL AUTO_INCREMENT,
-  `AccID` INT NOT NULL,
-  `Stock_Industry` CHAR(100) NOT NULL,
-  PRIMARY KEY (`Stock_PrefID`)
+  `stock_prefid` INT NOT NULL AUTO_INCREMENT,
+  `accid` INT NOT NULL,
+  `stock_industry` CHAR(100) NOT NULL,
+  PRIMARY KEY (`stock_prefid`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
-INSERT INTO `stock_pref` (`Stock_PrefID`, `AccID`, `Stock_Industry`) VALUES
+INSERT INTO `stock_pref` (`stock_prefid`, `accid`, `stock_industry`) VALUES
 ('3000001', '1000001', 'Energy'),
 ('3000002', '1000001', 'Information Technology'),
 ('3000003', '1000001', 'Financials'),

@@ -14,21 +14,23 @@ db = SQLAlchemy(app)
 
 class Trading_Acc(db.Model):
     __tablename__ = 'trading_acc'
-    trade_AccID = db.Column(db.Integer, primary_key=True, nullable=False)
-    accID = db.Column(db.Integer, nullable=False)
-    trade_Acc_Balance = db.Column(db.Numeric(13, 2), nullable=False)
+    trade_accid = db.Column(db.Integer, primary_key=True, nullable=False)
+    accid = db.Column(db.Integer, nullable=False)
+    trade_acc_balance = db.Column(db.Numeric(13, 2), nullable=False)
     currency = db.Column(db.String(3), nullable=False)
-    def __init__(self, trade_AccID, accID, trade_Acc_Balance, currency):
-        self.trade_AccID = trade_AccID
-        self.accID = accID
-        self.trade_Acc_Balance = trade_Acc_Balance
+    def __init__(self, trade_accid, accid, trade_acc_balance, currency):
+        self.trade_accid = trade_accid
+        self.accid = accid
+        self.trade_acc_balance = trade_acc_balance
         self.currency = currency
 
     def json(self):
-        return {"trade_AccID": self.trade_AccID, 
-        "accID": self.accID, 
-        "trade_Acc_Balance": self.trade_Acc_Balance,
-        "currency": self.currency}
+        return {
+            "trade_accid": self.trade_accid, 
+            "accid": self.accid, 
+            "trade_acc_balance": self.trade_acc_balance,
+            "currency": self.currency
+        }
 
 
 #GET
@@ -47,13 +49,13 @@ def get_all():
     return jsonify(
         {
             "code": 404,
-            "message": "There are no trading accounts."
+            "message": "There are no trading account."
         }
     ), 404
 
 @app.route("/trading_acc/<string:accID>/<string:currency>")
-def find_by_accID(accID, currency):
-    trading_acc = Trading_Acc.query.filter_by(accID=accID, currency=currency).first()
+def find_by_accID(accid, currency):
+    trading_acc = Trading_Acc.query.filter_by(accid=accid, currency=currency).first()
     if trading_acc:
         return jsonify(
             {
@@ -70,33 +72,33 @@ def find_by_accID(accID, currency):
 
 
 #POST
-@app.route("/trading_acc/create/<string:accID>", methods=['POST'])
-def create_trading_acc(accID):
+@app.route("/trading_acc/create/<string:accid>", methods=['POST'])
+def create_trading_acc(accid):
     senddata = request.get_json()
     #Check if accID matches
-    if (str(accID) != str(senddata['AccID'])):
+    if (str(accid) != str(senddata['accid'])):
         return jsonify(
             {
                 "code": 401,
                 "message": "Unauthorised action performed by user."
             }
         )
-    currency = str(senddata["Currency"]).upper()
-    result = Trading_Acc.query.filter_by(accID=accID, currency=currency).first()
+    currency = str(senddata["currency"]).upper()
+    result = Trading_Acc.query.filter_by(accid=accid, currency=currency).first()
     if result:
-        trade_acc_ID = result.json()['trade_AccID']
+        trade_accid = result.json()['trade_accid']
         return jsonify(
             {
                 "code": 400,
                 "data": {
-                    "trade_acc_ID": trade_acc_ID,
-                    "accID": accID,
+                    "trade_accid": trade_accid,
+                    "accid": accid,
                     "currency": currency
                 },
                 "message": "Trading account already exists."
             }
         ), 400
-    trading_acc = Trading_Acc(trade_AccID='',accID=accID, trade_Acc_Balance = 0.0, currency=currency)
+    trading_acc = Trading_Acc(trade_accid='',accid=accid, trade_acc_balance = 0.0, currency=currency)
     try:
         db.session.add(trading_acc)
         db.session.commit()
@@ -113,7 +115,7 @@ def create_trading_acc(accID):
             {
                 "code": 500,
                 "data": {
-                    "accID": accID
+                    "accid": accid
                 },
                 "message": "An error occurred creating a trading account."
             }
@@ -122,14 +124,16 @@ def create_trading_acc(accID):
 
 
 #PUT (Minus)
-@app.route("/trading_acc/minus/<string:accID>", methods=['PUT'])
-def minus(accID):
-    trading_acc = Trading_Acc.query.filter_by(accID=accID).first()
+@app.route("/trading_acc/minus/<string:accid>", methods=['PUT'])
+def minus(accid):
+    trading_acc = Trading_Acc.query.filter_by(accid=accid).first()
     if trading_acc:
-        senddata = request.get_json()
-        if (senddata['Trade_AccID'] == trading_acc.trade_AccID) and (senddata['AccID'] == trading_acc.accID):
-            if trading_acc.trade_Acc_Balance >= senddata['stock_price'] * senddata['stockQty']: #check balance 
-                trading_acc.trade_Acc_Balance -= decimal.Decimal(senddata['stock_price']) * decimal.Decimal(senddata['stockQty'])
+        stock_info = request.get_json()[0]["data"]
+        user_info = request.get_json()[1]["data"]
+        trade = request.get_json()[2]
+        if (user_info['trade_accid'] == trading_acc.trade_accid) and (user_info['accid'] == trading_acc.accid):
+            if trading_acc.trade_acc_balance >= stock_info['c'] * trade['stock_quantity']: #check balance 
+                trading_acc.trade_acc_balance -= decimal.Decimal(stock_info['c']) * decimal.Decimal(trade['stock_quantity'])
                 try:    
                     db.session.commit()
                     return jsonify(
@@ -151,7 +155,7 @@ def minus(accID):
                 {
             "code": 400,
             "data": {
-                "accID": accID
+                "accid": accid
             },
             "message": "Insufficient balance in trading account. Please top up"
         }
@@ -160,20 +164,20 @@ def minus(accID):
         {
             "code": 404,
             "data": {
-                "accID": accID
+                "accid": accid
             },
             "message": "Trading account not found."
         }
     ), 404
 
 #Put (Plus)
-@app.route("/trading_acc/plus/<string:accID>", methods=['PUT'])
-def plus(accID):
-    trading_acc = Trading_Acc.query.filter_by(accID=accID).first()
+@app.route("/trading_acc/plus/<string:accid>", methods=['PUT'])
+def plus(accid):
+    trading_acc = Trading_Acc.query.filter_by(accid=accid).first()
     if trading_acc:
         senddata = request.get_json()
-        if (senddata['Trade_AccID'] == trading_acc.trade_AccID) and (senddata['AccID'] == trading_acc.accID):
-            trading_acc.trade_Acc_Balance += decimal.Decimal(senddata['Amount'])
+        if (senddata['trade_accid'] == trading_acc.trade_accid) and (senddata['accid'] == trading_acc.accid):
+            trading_acc.trade_acc_balance += decimal.Decimal(senddata['amount'])
             try:    
                 db.session.commit()
                 return jsonify(
@@ -196,7 +200,7 @@ def plus(accID):
         {
             "code": 404,
             "data": {
-                "accID": accID
+                "accid": accid
             },
             "message": "Trading account not found."
         }
@@ -204,20 +208,20 @@ def plus(accID):
 
 
 #DELETE
-@app.route("/trading_acc/delete/<string:accID>", methods=['DELETE'])
-def delete_trading_acc(accID):
+@app.route("/trading_acc/delete/<string:accid>", methods=['DELETE'])
+def delete_trading_acc(accid):
     senddata = request.get_json()
     #Check if accID matches
-    if (str(accID) != str(senddata['AccID'])):
+    if (str(accid) != str(senddata['accid'])):
         return jsonify(
             {
                 "code": 401,
                 "message": "Unauthorised action performed by user."
             }
         )
-    currency = str(senddata["Currency"]).upper()
-    trading_acc = Trading_Acc.query.filter_by(accID=accID, currency=currency).first()
-    trading_acc_id = trading_acc.trade_AccID
+    currency = str(senddata["currency"]).upper()
+    trading_acc = Trading_Acc.query.filter_by(accid=accid, currency=currency).first()
+    trading_acc_id = trading_acc.trade_accid
     try:
         db.session.delete(trading_acc)
         db.session.commit()
@@ -226,7 +230,7 @@ def delete_trading_acc(accID):
                 "code": 200,
                 "data": {
                     "message": "Trading account successfully deleted",
-                    "Trading_acc_id": trading_acc_id
+                    "trading_acc_id": trading_acc_id
                 }
             }
         )
@@ -235,7 +239,7 @@ def delete_trading_acc(accID):
             {
                 "code": 500,
                 "data": {
-                    "Trading_acc_id": trading_acc_id
+                    "trading_acc_id": trading_acc_id
                 },
                 "message": "An error occurred deleting trading account."
             }

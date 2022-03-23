@@ -29,9 +29,9 @@ def get_stock_info(senddata):
     key = str(msg.decode('ascii'))
     sg = sendgrid.SendGridAPIClient(api_key=key)
     from_email = Email("dr.stocks.pte.ltd@gmail.com")  # Change to your verified sender
-    to_email = To(senddata["Email"])  # Change to your recipient
-    subject = senddata["Subject"]
-    content = Content("text/plain", senddata["Content"])
+    to_email = To(senddata["email"])  # Change to your recipient
+    subject = senddata["subject"]
+    content = Content("text/plain", senddata["content"])
     mail = Mail(from_email, to_email, subject, content)
 
     # Get a JSON-ready representation of the Mail object

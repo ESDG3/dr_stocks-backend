@@ -12,27 +12,29 @@ db = SQLAlchemy(app)
 
 class User(db.Model):
     __tablename__ = 'user'
-    accID = db.Column(db.Integer, primary_key=True, nullable=False)
-    trad_AccID = db.Column(db.Integer, nullable=False)
+    accid = db.Column(db.Integer, primary_key=True, nullable=False)
+    trade_accid = db.Column(db.Integer, nullable=False)
     name = db.Column(db.String(100), nullable=False)
     birthdate = db.Column(db.Date, nullable=False)
     email = db.Column(db.String(100), nullable=False)
     password = db.Column(db.String(100), nullable=False)
-    def __init__(self, accID, trad_AccID, name, birthdate, email, password):
-        self.accID = accID
-        self.trad_AccID = trad_AccID
+    def __init__(self, accid, trade_accid, name, birthdate, email, password):
+        self.accid = accid
+        self.trade_accid = trade_accid
         self.name = name
         self.birthdate = birthdate
         self.email = email
         self.password = password
 
     def json(self):
-        return {"accID": self.accID, 
-        "trad_AccID": self.trad_AccID, 
-        "name": self.name, 
-        "birthdate": self.birthdate,
-        "email": self.email,
-        "password": self.password}
+        return  {
+            "accid": self.accid, 
+            "trade_accid": self.trade_accid, 
+            "name": self.name, 
+            "birthdate": self.birthdate,
+            "email": self.email,
+            "password": self.password
+        }
 
 @app.route("/account/all")
 def get_all():
