@@ -1,20 +1,26 @@
 #!/usr/bin/env python3
 
-import sys
 import os
 import json
-from flask import Flask, request, jsonify
-from flask_cors import CORS
 
-app = Flask(__name__)
-CORS(app)
+import amqp_setup
 
-@app.route("/error", methods=['POST'])
+monitorBindingKey = '*.error'
+
 def receiveError():
-    data = request.get_data() # get any data in the request as the error message
-    processError(data)
-    # HTTP reply
-    return jsonify({"code": 200, "data": 'OK. Error log printed.'}), 200 # return message is not used in our case
+    amqp_setup.check_setup()
+    
+    queue_name = "Error"  
+
+    # set up a consumer and start to wait for coming messages
+    amqp_setup.channel.basic_consume(queue=queue_name, on_message_callback=callback, auto_ack=True)
+    amqp_setup.channel.start_consuming() # an implicit loop waiting to receive messages; 
+    #it doesn't exit by default. Use Ctrl+C in the command window to terminate it.
+
+def callback(channel, method, properties, body): # required signature for the callback; no return
+    print("\nReceived an error by " + __file__)
+    processError(body)
+    print() # print a new line feed
 
 def processError(errorMsg):
     print("Printing the error message:")
@@ -27,5 +33,8 @@ def processError(errorMsg):
     print() # print a new line feed as a separator
 
 
-if __name__ == "__main__":  # execute this program only if it is run as a script (not by 'import')
-    app.run(port=5008, debug=True)
+
+if __name__ == "__main__":  # execute this program only if it is run as a script (not by 'import')    
+    print("\nThis is " + os.path.basename(__file__), end='')
+    print(": monitoring routing key '{}' in exchange '{}' ...".format(monitorBindingKey, amqp_setup.exchangename))
+    receiveError()

@@ -1,15 +1,29 @@
-from flask import Flask, request, jsonify
+#!/usr/bin/env python3
+
+import json
+import os
+
+import amqp_setup
+
 import sendgrid, base64
 from sendgrid.helpers.mail import Mail, Email, To, Content
-from flask_cors import CORS
 
-app = Flask(__name__)
-CORS(app)
+def receiveEmailNotification():
+    amqp_setup.check_setup()
 
-#POST
-@app.route("/email_noti/send", methods=['POST'])
-def get_stock_info():
-    senddata = request.get_json()
+    queue_name = 'Email_Notification'
+
+    # set up a consumer and start to wait for coming messages
+    amqp_setup.channel.basic_consume(queue=queue_name, on_message_callback=callback, auto_ack=True)
+    amqp_setup.channel.start_consuming() # an implicit loop waiting to receive messages; 
+    #it doesn't exit by default. Use Ctrl+C in the command window to terminate it.
+
+def callback(channel, method, properties, body):
+    print("\nReceived an email notification log by " + __file__)
+    get_stock_info(json.loads(body))
+    print() # print a new line feed
+
+def get_stock_info(senddata):
     text = "U0cuN1ZPa0lCamhROHFFUDdweDdvNkFRUS53OFhmYVJ2QUYxcDZxSHBxclF6dWI5WUFteHZweUtuTm1WZkl5bVFvMXRR"
     msg = base64.b64decode(text)
     key = str(msg.decode('ascii'))
@@ -26,7 +40,7 @@ def get_stock_info():
     # Send an HTTP POST request to /mail/send
     response = sg.client.mail.send.post(request_body=mail_json)
     res = str(response.headers).split("\n")
-    return jsonify(
+    print(
         {
             "code":str(response.status_code),
             "data":res
