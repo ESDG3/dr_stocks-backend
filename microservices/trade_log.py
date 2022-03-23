@@ -13,33 +13,35 @@ CORS(app)
 
 class Trade_Log(db.Model):
     __tablename__ = 'trade_log'
-    tradeID = db.Column(db.Integer, primary_key=True, nullable=False)
-    accID = db.Column(db.Integer, nullable=False)
-    trade_Date = db.Column(db.DateTime, nullable=False)
-    trade_Value = db.Column(db.Numeric(13, 2), nullable=False)
-    trade_Stock_Symbol = db.Column(db.String(5), nullable=False)
-    trade_Quantity = db.Column(db.Integer, nullable=False)
+    tradeid = db.Column(db.Integer, primary_key=True, nullable=False)
+    accid = db.Column(db.Integer, nullable=False)
+    trade_date = db.Column(db.DateTime, nullable=False)
+    trade_value = db.Column(db.Numeric(13, 2), nullable=False)
+    trade_stock_symbol = db.Column(db.String(5), nullable=False)
+    trade_quantity = db.Column(db.Integer, nullable=False)
     currency = db.Column(db.String(3), nullable=False)
-    trade_Action = db.Column(db.String(20), nullable=False)
-    def __init__(self, tradeID, accID, trade_Date, trade_Value, trade_Stock_Symbol, trade_Quantity, currency, trade_Action):
-        self.tradeID = tradeID
-        self.accID = accID
-        self.trade_Date = trade_Date
-        self.trade_Value = trade_Value
-        self.trade_Stock_Symbol = trade_Stock_Symbol
-        self.trade_Quantity = trade_Quantity
+    trade_action = db.Column(db.String(20), nullable=False)
+    def __init__(self, tradeid, accid, trade_date, trade_value, trade_stock_symbol, trade_quantity, currency, trade_action):
+        self.tradeid = tradeid
+        self.accid = accid
+        self.trade_date = trade_date
+        self.trade_value = trade_value
+        self.trade_stock_symbol = trade_stock_symbol
+        self.trade_quantity = trade_quantity
         self.currency = currency
-        self.trade_Action = trade_Action
+        self.trade_action = trade_action
 
     def json(self):
-        return {"tradeID": self.tradeID, 
-        "accID": self.accID, 
-        "trade_Date": self.trade_Date,
-        "trade_Value": self.trade_Value, 
-        "trade_Stock_Symbol": self.trade_Stock_Symbol,
-        "trade_Quantity": self.trade_Quantity,
-        "currency": self.currency,
-        "trade_Action": self.trade_Action}
+        return {
+            "tradeid": self.tradeid, 
+            "accid": self.accid, 
+            "trade_date": self.trade_date,
+            "trade_value": self.trade_value, 
+            "trade_stock_symbol": self.trade_stock_symbol,
+            "trade_quantity": self.trade_quantity,
+            "currency": self.currency,
+            "trade_action": self.trade_action
+        }
 
 #GET
 @app.route("/trade_log/all")
@@ -61,9 +63,9 @@ def get_all():
         }
     ), 404
 
-@app.route("/trade_log/<string:accID>")
-def find_by_accID(accID):
-    user_trade_log = Trade_Log.query.filter_by(accID=accID) #.first()
+@app.route("/trade_log/<string:accid>")
+def find_by_accID(accid):
+    user_trade_log = Trade_Log.query.filter_by(accid=accid) #.first()
     if user_trade_log:
         return jsonify(
             {
@@ -79,11 +81,11 @@ def find_by_accID(accID):
     ), 404
 
 #POST
-@app.route("/trade_log/create/<string:accID>", methods=['POST'])
-def create_trade_log(accID):
+@app.route("/trade_log/create/<string:accid>", methods=['POST'])
+def create_trade_log(accid):
     senddata = request.get_json()
     #Check if accID matches
-    if (str(accID) != str(senddata['AccID'])):
+    if (str(accid) != str(senddata['accid'])):
         return jsonify(
             {
                 "code": 401,
@@ -93,7 +95,7 @@ def create_trade_log(accID):
     now = datetime.now()
     current_time = now.strftime("%Y-%m-%d %H:%M:%S")
     try:
-        trade_log = Trade_Log(tradeID="",accID=accID, trade_Date=current_time, trade_Value=senddata["Trade_Value"], trade_Stock_Symbol=str(senddata["Trade_Stock_Symbol"]).upper(), trade_Quantity=senddata["Trade_Quantity"], currency=str(senddata["Currency"]).upper(), trade_Action=str(senddata["Trade_Action"]).upper())
+        trade_log = Trade_Log(tradeID="",accid=accid, trade_date=current_time, trade_value=senddata["trade_value"], trade_stock_symbol=str(senddata["trade_stock_symbol"]).upper(), trade_quantity=senddata["trade_quantity"], currency=str(senddata["currency"]).upper(), trade_Action=str(senddata["trade_action"]).upper())
         db.session.add(trade_log)
         db.session.commit()
     except:
@@ -101,7 +103,7 @@ def create_trade_log(accID):
             {
                 "code": 500,
                 "data": {
-                    "accID": accID,
+                    "accid": accid,
                     "data": senddata,
                     "time":current_time
                 },
@@ -112,7 +114,7 @@ def create_trade_log(accID):
         {
             "code": 200,
             "data":{
-                "accID": accID,
+                "accid": accid,
                 "data": senddata,
                 "time":current_time
             },

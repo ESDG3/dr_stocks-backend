@@ -13,30 +13,32 @@ db = SQLAlchemy(app)
 
 class Trans_Log(db.Model):
     __tablename__ = 'transaction_log'
-    transactionID = db.Column(db.Integer, primary_key=True, nullable=False)
-    accID = db.Column(db.Integer, nullable=False)
-    trade_AccID = db.Column(db.Integer, nullable=False)
-    transaction_Action = db.Column(db.String(20), nullable=False)
-    transaction_Value = db.Column(db.Numeric(13, 2), nullable=False)
-    transaction_Date = db.Column(db.DateTime, nullable=False)
+    transactionid = db.Column(db.Integer, primary_key=True, nullable=False)
+    accid = db.Column(db.Integer, nullable=False)
+    trade_accid = db.Column(db.Integer, nullable=False)
+    transaction_action = db.Column(db.String(20), nullable=False)
+    transaction_value = db.Column(db.Numeric(13, 2), nullable=False)
+    transaction_date = db.Column(db.DateTime, nullable=False)
     currency = db.Column(db.String(3), nullable=False)
-    def __init__(self, transactionID, accID, trade_AccID, transaction_Action, transaction_Value, transaction_Date, currency):
-        self.transactionID = transactionID
-        self.accID = accID
-        self.trade_AccID = trade_AccID
-        self.transaction_Action = transaction_Action
-        self.transaction_Value = transaction_Value
-        self.transaction_Date = transaction_Date
+    def __init__(self, transactionid, accid, trade_accid, transaction_action, transaction_value, transaction_date, currency):
+        self.transactionid = transactionid
+        self.accid = accid
+        self.trade_accid = trade_accid
+        self.transaction_action = transaction_action
+        self.transaction_value = transaction_value
+        self.transaction_date = transaction_date
         self.currency = currency
 
     def json(self):
-        return {"transactionID": self.transactionID, 
-        "accID": self.accID, 
-        "trade_AccID": self.trade_AccID,
-        "transaction_Action": self.transaction_Action, 
-        "transaction_Value": self.transaction_Value,
-        "transaction_Date": self.transaction_Date,
-        "currency": self.currency}
+        return  {
+            "transactionid": self.transactionid, 
+            "accid": self.accid, 
+            "trade_accid": self.trade_accid,
+            "transaction_action": self.transaction_action, 
+            "transaction_value": self.transaction_value,
+            "transaction_date": self.transaction_date,
+            "currency": self.currency
+        }
 
 #GET
 @app.route("/trans_log/all")
@@ -58,9 +60,9 @@ def get_all():
         }
     ), 404
 
-@app.route("/trans_log/<string:accID>")
-def find_by_accID(accID):
-    user_transaction_log = Trans_Log.query.filter_by(accID=accID) #.first()
+@app.route("/trans_log/<string:accid>")
+def find_by_accID(accid):
+    user_transaction_log = Trans_Log.query.filter_by(accid=accid) #.first()
     if user_transaction_log:
         return jsonify(
             {
@@ -77,11 +79,11 @@ def find_by_accID(accID):
 
 
 #POST
-@app.route("/trans_log/create/<string:accID>", methods=['POST'])
-def create_trade_log(accID):
+@app.route("/trans_log/create/<string:accid>", methods=['POST'])
+def create_trade_log(accid):
     senddata = request.get_json()
     #Check if accID matches
-    if (str(accID) != str(senddata['AccID'])):
+    if (str(accid) != str(senddata['accid'])):
         return jsonify(
             {
                 "code": 401,
@@ -91,7 +93,7 @@ def create_trade_log(accID):
     now = datetime.now()
     current_time = now.strftime("%Y-%m-%d %H:%M:%S")
     try:
-        trans_log = Trans_Log(transactionID="",accID=accID, trade_AccID=senddata["Trade_AccID"], transaction_Action=str(senddata["Transaction_Action"]).upper(), transaction_Value=senddata["Transaction_Value"], transaction_Date=current_time, currency= str(senddata["Currency"]).upper())
+        trans_log = Trans_Log(transactionID="",accid=accid, trade_accID=senddata["trade_accID"], transaction_action=str(senddata["transaction_action"]).upper(), transaction_value=senddata["transaction_value"], transaction_Date=current_time, currency= str(senddata["currency"]).upper())
         db.session.add(trans_log)
         db.session.commit()
     except:
@@ -99,7 +101,7 @@ def create_trade_log(accID):
             {
                 "code": 500,
                 "data": {
-                    "accID": accID,
+                    "accid": accid,
                     "data": senddata,
                     "time":current_time
                 },
@@ -110,7 +112,7 @@ def create_trade_log(accID):
         {
             "code": 200,
             "data":{
-                "accID": accID,
+                "accid": accid,
                 "data": senddata,
                 "time":current_time
             },

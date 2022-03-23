@@ -12,18 +12,20 @@ CORS(app)
 
 class Stock_Pref(db.Model):
     __tablename__ = 'stock_pref'
-    stock_PrefID = db.Column(db.Integer, primary_key=True, nullable=False)
-    accID = db.Column(db.Integer, nullable=False)
-    stock_Industry = db.Column(db.String(100), nullable=False)
-    def __init__(self, stock_PrefID, accID, stock_Industry):
-        self.stock_PrefID = stock_PrefID
-        self.accID = accID
-        self.stock_Industry = stock_Industry
+    stock_prefid = db.Column(db.Integer, primary_key=True, nullable=False)
+    accid = db.Column(db.Integer, nullable=False)
+    stock_industry = db.Column(db.String(100), nullable=False)
+    def __init__(self, stock_prefID, accid, stock_industry):
+        self.stock_prefid = stock_prefID
+        self.accid = accid
+        self.stock_industry = stock_industry
 
     def json(self):
-        return {"stock_PrefID": self.stock_PrefID, 
-        "accID": self.accID, 
-        "stock_Industry": self.stock_Industry}
+        return {
+            "stock_prefid": self.stock_prefid, 
+            "accID": self.accid, 
+            "stock_Industry": self.stock_industry
+        }
 
 #GET
 @app.route("/stock_pref/all")
@@ -47,7 +49,7 @@ def get_all():
 
 @app.route("/stock_pref/<string:accID>")
 def find_by_accID(accID):
-    user_stock_pref = Stock_Pref.query.filter_by(accID=accID) #.first()
+    user_stock_pref = Stock_Pref.query.filter_by(accid=accid) #.first()
     if user_stock_pref:
         return jsonify(
             {
@@ -64,14 +66,14 @@ def find_by_accID(accID):
 
 
 #POST
-@app.route("/stock_pref/add/<string:accID>", methods=['POST'])
-def create_stock_pref(accID):
+@app.route("/stock_pref/add/<string:accid>", methods=['POST'])
+def create_stock_pref(accid):
     #Variables
     to_add_list, added_list, success_list, error_list  = [], [], [], []
     senddata = request.get_json()
 
     #Check if accID matches
-    if (str(accID) != str(senddata['AccID'])):
+    if (str(accid) != str(senddata['accid'])):
         return jsonify(
             {
                 "code": 401,
@@ -79,48 +81,48 @@ def create_stock_pref(accID):
             }
         )
     #Loop thru items in preferences
-    for stock_Industry in senddata['Stock_Industry']:
-        stock_Industry = str(stock_Industry).capitalize()
-        if (Stock_Pref.query.filter_by(accID=accID, stock_Industry=stock_Industry).first()):
-            added_list.append(stock_Industry)
+    for stock_industry in senddata['stock_industry']:
+        stock_industry = str(stock_industry).capitalize()
+        if (Stock_Pref.query.filter_by(accid=accid, stock_industry=stock_industry).first()):
+            added_list.append(stock_industry)
         else:
-            to_add_list.append(stock_Industry)
+            to_add_list.append(stock_industry)
     #If there is an item in preference that is added before, return
     if len(added_list):
         return jsonify(
                 {
                     "code": 400,
                     "data": {
-                        "accID": accID,
-                        "stock_Industry": added_list
+                        "accid": accid,
+                        "stock_industry": added_list
                     },
                     "message": "Stock(s) preference already exists. Please remove added stock(s) preference"
                 }
             ), 400
     #Loop thru items in to_add_list
-    for stock_Industry in to_add_list:
-        stock_Industry = str(stock_Industry).capitalize()
+    for stock_industry in to_add_list:
+        stock_industry = str(stock_industry).capitalize()
         try:
-            stock_pref = Stock_Pref(stock_PrefID='',accID=accID, stock_Industry = stock_Industry)
+            stock_pref = Stock_Pref(stock_prefid='',accid=accid, stock_industry = stock_industry)
             db.session.add(stock_pref)
             db.session.commit()
-            success_list.append(stock_Industry)
+            success_list.append(stock_industry)
         except:
-            error_list.append(stock_Industry)
+            error_list.append(stock_industry)
     
     #If there are errors and success items, delete success list and try all again
     if (len(error_list)) and (len(success_list)):
         #delete success_list
         for success in success_list:
-            stock_pref = Stock_Pref.query.filter_by(accID=accID, stock_Industry=success).first()
+            stock_pref = Stock_Pref.query.filter_by(accid=accid, stock_industry=success).first()
             db.session.delete(stock_pref)
             db.session.commit()
         return jsonify(
             {
                 "code": 500,
                 "data": {
-                    "accID": accID,
-                    "stock_Industry": error_list
+                    "accid": accid,
+                    "stock_industry": error_list
                 },
                 "message": "An error occurred adding the stock(s) preference. Please try adding the same preferences again."
             }
@@ -131,8 +133,8 @@ def create_stock_pref(accID):
             {
                 "code": 500,
                 "data": {
-                    "accID": accID,
-                    "stock_Industry": error_list
+                    "accid": accid,
+                    "stock_industry": error_list
                 },
                 "message": "An error occurred adding the stock preference."
             }
@@ -143,8 +145,8 @@ def create_stock_pref(accID):
             {
                 "code": 200,
                 "data":{
-                    "accID": accID,
-                    "stock_Industry": success_list
+                    "accid": accid,
+                    "stock_industry": success_list
                 },
                 "message": "Stock preference successfully added"
             }
@@ -152,37 +154,37 @@ def create_stock_pref(accID):
 
 
 #DELETE
-@app.route("/stock_pref/remove/<string:accID>", methods=['DELETE'])
-def delete_stock_pref(accID):
+@app.route("/stock_pref/remove/<string:accid>", methods=['DELETE'])
+def delete_stock_pref(accid):
     #Variables
     deleted_list, error_list = [], []
     senddata = request.get_json()
 
     #Check if accID matches
-    if (str(accID) != str(senddata['AccID'])):
+    if (str(accid) != str(senddata['accid'])):
         return jsonify(
             {
                 "code": 401,
-                "message": "Unauthroised action performed by user."
+                "message": "Unauthorised action performed by user."
             }
         )
     #Loop thru items in preferences
-    for stock_Industry in senddata["Stock_Industry"]:
-        stock_Industry = str(stock_Industry).capitalize()
-        stock_pref = Stock_Pref.query.filter_by(accID=accID, stock_Industry=stock_Industry).first()
+    for stock_industry in senddata["stock_industry"]:
+        stock_industry = str(stock_industry).capitalize()
+        stock_pref = Stock_Pref.query.filter_by(accid=accid, stock_industry=stock_industry).first()
         if stock_pref:
             db.session.delete(stock_pref)
             db.session.commit()
-            deleted_list.append(stock_Industry)
+            deleted_list.append(stock_industry)
         else:
             #If error occured
-            error_list.append(stock_Industry)
+            error_list.append(stock_industry)
             return jsonify(
                 {
                     "code": 404,
                     "data": {
-                        "accID": accID,
-                        "stock_Industry": stock_Industry
+                        "accid": accid,
+                        "stock_industry": stock_industry
                     },
                     "message": "Stock preference not found."
                 }
@@ -193,8 +195,8 @@ def delete_stock_pref(accID):
             {
                 "code": 200,
                 "data": {
-                    "accID": accID,
-                    "stock_Industry": deleted_list
+                    "accid": accid,
+                    "stock_industry": deleted_list
                 },
                 "message": "Stock preference successfully deleted."
             }
