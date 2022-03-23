@@ -88,7 +88,7 @@ def processDeposit(deposit):
         # 9. Return error
         return {
             "code": 500,
-            "data": {"deposit_log": deposit_log},
+            "data": {"deposit_log": deposit_result},
             "message": "Deposit action failure sent for error handling."
         }
 
