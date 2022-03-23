@@ -7,9 +7,9 @@ from os import environ
 import requests
 from invokes import invoke_http
 
-# import amqp_setup
-# import pika
-# import json
+import amqp_setup
+import pika
+import json
 
 app = Flask(__name__)
 CORS(app)
@@ -78,27 +78,18 @@ def processDeposit(deposit):
         "Trade_AccID" : deposit_result["data"]["trade_AccID"],
         "trade_Acc_Balance" : deposit_result["data"]["trade_Acc_Balance"]
     })
-    print(deposit_log)
-    # 7. Sent amount deposited
-    # Invoke transaction log microservice
-    # print('\n\n-----Publishing the (deposit info) message with routing_key=deposit.info-----') 
-    new_transaction_log_URL = transaction_log_URL + "/" + str(user_info["data"]["accID"])
-    invoke_http(new_transaction_log_URL, method='POST',json=deposit_log)
-    # amqp_setup.channel.basic_publish(exchange=amqp_setup.exchangename, routing_key="deposit.info", 
-    #         body=message)
-    print("\nDeposit action performed and updated transaction log.\n")
 
     # Check the deposit result; if a failure, send it to the error microservice.
     code = deposit_result["code"]
-    # message = json.dumps(deposit_result)
+    message = json.dumps(deposit_log)
 
     if code not in range(200,300):
         # Inform the error microservice
         #print('\n\n-----Invoking error microservice as order fails-----')
         print('\n\n-----Publishing the (deposit error) message with routing_key=deposit.error-----')
-        invoke_http(error_URL, method="POST", json=deposit_result)
-        # amqp_setup.channel.basic_publish(exchange=amqp_setup.exchangename, routing_key="deposit.error", 
-        #     body=message, properties=pika.BasicProperties(delivery_mode = 2)) 
+        # invoke_http(error_URL, method="POST", json=deposit_result)
+        amqp_setup.channel.basic_publish(exchange=amqp_setup.exchangename, routing_key="deposit.error", 
+            body=message, properties=pika.BasicProperties(delivery_mode = 2)) 
         # make message persistent within the matching queues until it is received by some receiver 
         # (the matching queues have to exist and be durable and bound to the exchange)
 
@@ -113,17 +104,27 @@ def processDeposit(deposit):
             "data": {"deposit_log": deposit_log},
             "message": "Deposit action failure sent for error handling."
         }
+
     else:
 
-        # 8. Notify trader
-        # Invoke email notification microservice
-        print('\n\n-----Publishing the (deposit info) message with routing_key=deposit.info-----') 
-        invoke_http(email_notification_URL, method='POST',json=deposit_log)           
-        # amqp_setup.channel.basic_publish(exchange=amqp_setup.exchangename, routing_key="deposit.info", 
-        #     body=message)
-        print("\nDeposit action performed and notified user.\n")
+        # 7. Sent amount deposited
+        # Invoke transaction log microservice
+        # print('\n\n-----Publishing the (deposit.transaction) message with routing_key=deposit.transaction-----') 
+        # new_transaction_log_URL = transaction_log_URL + "/" + str(user_info["data"]["accID"])
+        # invoke_http(new_transaction_log_URL, method='POST',json=deposit_log)
+        amqp_setup.channel.basic_publish(exchange=amqp_setup.exchangename, routing_key="deposit.transaction", 
+                body=message)
+        print("\nDeposit transaction published to transaction log\n")
+
+    # 8. Notify trader
+    # Invoke email notification microservice
+    print('\n\n-----Publishing the (deposit log) message with routing_key=deposit.log-----') 
+    # invoke_http(email_notification_URL, method='POST',json=deposit_log)           
+    amqp_setup.channel.basic_publish(exchange=amqp_setup.exchangename, routing_key="deposit.log", 
+        body=message)
+    print("\nDeposit action performed and notified user.\n")
         
-    print("\nDeposit published to RabbitMQ Exchange.\n")
+
     # - reply from the invocation is not used;
     # continue even if this invocation fails
 
