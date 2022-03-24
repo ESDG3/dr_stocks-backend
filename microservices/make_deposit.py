@@ -15,12 +15,17 @@ app = Flask(__name__)
 CORS(app)
 
 trading_acc_URL = "http://localhost:5004/trading_acc/plus"
-transaction_log_URL = "http://localhost:5005/trans_log/create"
+# transaction_log_URL = "http://localhost:5005/trans_log/create"
 user_info_URL = "http://localhost:5006/account/email"
-email_notification_URL = "http://localhost:5003/email_noti/send"
-error_URL = "http://localhost:5008/error"
+# email_notification_URL = "http://localhost:5003/email_noti/send"
+# error_URL = "http://localhost:5008/error"
 
-
+# deposit {
+#   "email" : "johnmark@gmail.com",
+#   "amount" : 5000,
+#   "transaction_action" : "deposit",
+#   "currency" : "USD"
+# }
 @app.route("/make_deposit", methods=['POST'])
 def make_deposit():
     # Simple check of input format and data of the request are JSON
@@ -55,28 +60,28 @@ def make_deposit():
 def processDeposit(deposit):
     # 3. Retrieve the amount trader has 
     # Invoke the user info microservice
-    print('\n-----Invoking user info microservice-----')
+    print('\n-----Invoking user_info microservice-----')
     new_user_info_URL = user_info_URL + '/' + deposit["email"]
     user_info = invoke_http(new_user_info_URL, method='GET')
-
+    print("user_info", user_info)
     # 5. Update amount deposited 
     # Invoke trading account microservice
     print('\n-----Invoking trading account microservice-----')
-    new_trading_acc_URL = trading_acc_URL + '/' + str(user_info["data"]["accID"]) 
+    new_trading_acc_URL = trading_acc_URL + '/' + str(user_info["data"]["accid"])
     deposit_result = invoke_http(new_trading_acc_URL, method='PUT',json= [user_info, deposit])
     print('deposit_result:', deposit_result)
 
     # Check the deposit result; if a failure, send it to the error microservice.
     code = deposit_result["code"]
-    message = json.dumps(deposit_result)
-
+    deposit_log_message = json.dumps([deposit_result, deposit])
     if code not in range(200,300):
         # Inform the error microservice
         #print('\n\n-----Invoking error microservice as order fails-----')
         print('\n\n-----Publishing the (deposit error) message with routing_key=deposit.error-----')
         # invoke_http(error_URL, method="POST", json=deposit_result)
+        error_message = json.dumps(deposit_result)
         amqp_setup.channel.basic_publish(exchange=amqp_setup.exchangename, routing_key="deposit.error", 
-            body=message, properties=pika.BasicProperties(delivery_mode = 2)) 
+            body=error_message, properties=pika.BasicProperties(delivery_mode = 2)) 
         # make message persistent within the matching queues until it is received by some receiver 
         # (the matching queues have to exist and be durable and bound to the exchange)
 
@@ -100,15 +105,16 @@ def processDeposit(deposit):
         # new_transaction_log_URL = transaction_log_URL + "/" + str(user_info["data"]["accID"])
         # invoke_http(new_transaction_log_URL, method='POST',json=deposit_log)
         amqp_setup.channel.basic_publish(exchange=amqp_setup.exchangename, routing_key="deposit.transaction", 
-                body=message)
+                body=deposit_log_message)
         print("\nDeposit transaction published to transaction log\n")
 
     # 8. Notify trader
     # Invoke email notification microservice
-    print('\n\n-----Publishing the (deposit log) message with routing_key=deposit.log-----') 
+    print('\n\n-----Publishing the (email) message with routing_key=email.log-----') 
     # invoke_http(email_notification_URL, method='POST',json=deposit_log)           
-    amqp_setup.channel.basic_publish(exchange=amqp_setup.exchangename, routing_key="deposit.log", 
-        body=message)
+    email_log_message = json.dumps([deposit_result, deposit])
+    amqp_setup.channel.basic_publish(exchange=amqp_setup.exchangename, routing_key="email.log", 
+        body=email_log_message)
     print("\nDeposit action performed and notified user.\n")
         
 
@@ -123,4 +129,4 @@ def processDeposit(deposit):
     }
 
 if __name__ == '__main__':
-    app.run(port=5000, debug=True)
+    app.run(port=5101, debug=True)

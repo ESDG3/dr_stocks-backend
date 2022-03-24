@@ -30,7 +30,7 @@ channel.exchange_declare(exchange=exchangename, exchange_type=exchangetype, dura
 
 ############   Error queue   #############
 #delcare Error queue
-queue_name = 'Error'
+queue_name = 'error'
 channel.queue_declare(queue=queue_name, durable=True) 
     # 'durable' makes the queue survive broker restarts
 

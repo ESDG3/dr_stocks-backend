@@ -59,16 +59,16 @@ def receiveTransactionLog():
 def callback(channel, method, properties, body): # required signature for the callback; no return
     print("\nReceived a transaction log by " + __file__)
     processTransactionLog(json.loads(body))
-
     print() # print a new line feed
 
 
 def processTransactionLog(transaction):
     print("Recording a transaction log:")
-    print(transaction)
+    system_output = transaction[0]
+    user_input = transaction[1]
     now = datetime.now()
     current_time = now.strftime("%Y-%m-%d %H:%M:%S")
-    trans_log = Trans_Log(transactionid=None,accid=transaction["accid"], trade_accid=transaction["trade_accid"], transaction_action=str(transaction["transaction_action"]).upper(), transaction_value=transaction["transaction_value"], transaction_date=current_time, currency= str(transaction["currency"]).upper())
+    trans_log = Trans_Log(transactionid=None,accid=system_output["data"]["accid"], trade_accid=system_output["data"]["trade_accid"], transaction_action=str(user_input["transaction_action"]).upper(), transaction_value=user_input["amount"], transaction_date=current_time, currency= str(user_input["currency"]).upper())
     db.session.add(trans_log)
     db.session.commit()
     print("Successful record transaction log into database")
