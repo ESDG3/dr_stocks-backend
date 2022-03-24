@@ -51,7 +51,7 @@ class Trade_Log(db.Model):
             "status" : self.status
         }
 
-monitorBindingKey = "#"
+monitorBindingKey = "#.trade"
 
 def receiveTradeLog():
     amqp_setup.check_setup()
@@ -79,9 +79,9 @@ def processTradeLog(trade):
     now = datetime.now()
     current_time = now.strftime("%Y-%m-%d %H:%M:%S")
     if system_output["code"] > 300:
-        status = 'Failed'
+        status = 'FAILED'
     else:
-        status = 'Success'
+        status = 'SUCCESS'
     trade_log = Trade_Log(tradeid=None,accid=system_output["data"]["accid"], trade_date=current_time, trade_value=trading_value, trade_stock_symbol=user_input["stock_symbol"],trade_quantity=user_input["stock_quantity"],currency=user_input["currency"],trade_action=user_input["transaction_action"], status = status )
     db.session.add(trade_log)
     db.session.commit()
@@ -166,5 +166,7 @@ def processTradeLog(trade):
 #     )
 
 if __name__ == '__main__':
+    print("\nThis is " + os.path.basename(__file__), end='')
+    print(": monitoring routing key '{}' in exchange '{}' ...".format(monitorBindingKey, amqp_setup.exchangename))
     receiveTradeLog()
     app.run(port=5003, debug=True)

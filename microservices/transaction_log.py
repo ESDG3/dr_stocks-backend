@@ -24,7 +24,8 @@ class Trans_Log(db.Model):
     transaction_value = db.Column(db.Numeric(13, 2), nullable=False)
     transaction_date = db.Column(db.DateTime, nullable=False)
     currency = db.Column(db.String(3), nullable=False)
-    def __init__(self, transactionid, accid, trade_accid, transaction_action, transaction_value, transaction_date, currency):
+    status = db.Column(db.String(20), nullable=False)
+    def __init__(self, transactionid, accid, trade_accid, transaction_action, transaction_value, transaction_date, currency, status):
         self.transactionid = transactionid
         self.accid = accid
         self.trade_accid = trade_accid
@@ -32,6 +33,7 @@ class Trans_Log(db.Model):
         self.transaction_value = transaction_value
         self.transaction_date = transaction_date
         self.currency = currency
+        self.status = status
 
     def json(self):
         return  {
@@ -41,10 +43,11 @@ class Trans_Log(db.Model):
             "transaction_action": self.transaction_action, 
             "transaction_value": self.transaction_value,
             "transaction_date": self.transaction_date,
-            "currency": self.currency
+            "currency": self.currency,
+            "status" : self.status
         }
 
-monitorBindingKey= '#'
+monitorBindingKey= '#.transaction'
 
 def receiveTransactionLog():
     amqp_setup.check_setup()
@@ -61,14 +64,19 @@ def callback(channel, method, properties, body): # required signature for the ca
     processTransactionLog(json.loads(body))
     print() # print a new line feed
 
-
+#check if value is positive and check if currency is valid
 def processTransactionLog(transaction):
     print("Recording a transaction log:")
+    print(transaction)
     system_output = transaction[0]
     user_input = transaction[1]
     now = datetime.now()
     current_time = now.strftime("%Y-%m-%d %H:%M:%S")
-    trans_log = Trans_Log(transactionid=None,accid=system_output["data"]["accid"], trade_accid=system_output["data"]["trade_accid"], transaction_action=str(user_input["transaction_action"]).upper(), transaction_value=user_input["amount"], transaction_date=current_time, currency= str(user_input["currency"]).upper())
+    if system_output["code"] > 300:
+        status = 'FAILED'
+    else:
+        status = 'SUCCESS'
+    trans_log = Trans_Log(transactionid=None,accid=system_output["data"]["accid"], trade_accid=system_output["data"]["trade_accid"], transaction_action=str(user_input["transaction_action"]).upper(), transaction_value=user_input["amount"], transaction_date=current_time, currency= str(user_input["currency"]).upper(),status=status)
     db.session.add(trans_log)
     db.session.commit()
     print("Successful record transaction log into database")
@@ -154,5 +162,7 @@ def processTransactionLog(transaction):
 
 
 if __name__ == '__main__':
+    print("\nThis is " + os.path.basename(__file__), end='')
+    print(": monitoring routing key '{}' in exchange '{}' ...".format(monitorBindingKey, amqp_setup.exchangename))
     receiveTransactionLog()
     app.run(port=5005, debug=True)

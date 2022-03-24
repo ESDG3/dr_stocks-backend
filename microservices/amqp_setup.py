@@ -46,7 +46,7 @@ channel.queue_declare(queue=queue_name, durable=True)
     # 'durable' makes the queue survive broker restarts
 
 #bind Transaction_log queue
-channel.queue_bind(exchange=exchangename, queue=queue_name, routing_key='#') 
+channel.queue_bind(exchange=exchangename, queue=queue_name, routing_key='#.transaction') 
     # bind the queue to the exchange via the key
     # 'routing_key=#' => any routing_key would be matched
     
@@ -69,7 +69,7 @@ channel.queue_declare(queue=queue_name, durable=True)
     # 'durable' makes the queue survive broker restarts
 
 #bind Trade_log queue
-channel.queue_bind(exchange=exchangename, queue=queue_name, routing_key='*.trade') 
+channel.queue_bind(exchange=exchangename, queue=queue_name, routing_key='#.trade') 
     # bind the queue to the exchange via the key
     # any routing_key with two words and ending with '.trade' will be matched
 """

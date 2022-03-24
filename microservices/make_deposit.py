@@ -23,7 +23,7 @@ user_info_URL = "http://localhost:5006/account/email"
 # deposit {
 #   "email" : "johnmark@gmail.com",
 #   "amount" : 5000,
-#   "transaction_action" : "deposit",
+#   "transaction_action" : "DEPOSIT",
 #   "currency" : "USD"
 # }
 @app.route("/make_deposit", methods=['POST'])
@@ -64,6 +64,26 @@ def processDeposit(deposit):
     new_user_info_URL = user_info_URL + '/' + deposit["email"]
     user_info = invoke_http(new_user_info_URL, method='GET')
     print("user_info", user_info)
+
+    code = user_info["code"]
+    if code not in range(200,300):
+        #4. Send error message to error microservice
+        #Inform the error microservice
+        print('\n\n-----Publishing the (user error) message with routing_key=user.error-----')
+        user_error_message = json.dumps(user_info)
+        amqp_setup.channel.basic_publish(exchange=amqp_setup.exchangename, routing_key="user.error", 
+            body=user_error_message, properties=pika.BasicProperties(delivery_mode = 2)) 
+        # make message persistent within the matching queues until it is received by some receiver 
+        # (the matching queues have to exist and be durable and bound to the exchange)
+        # delivery_mode = 2: make message persistent within the matching queues until it is received by some receiver
+
+        # 9. Return error
+        return {
+            "code": 500,
+            "data": {"user_info": user_info},
+            "message": "User not found and sent for error handling."
+        }
+
     # 5. Update amount deposited 
     # Invoke trading account microservice
     print('\n-----Invoking trading account microservice-----')
@@ -73,15 +93,16 @@ def processDeposit(deposit):
 
     # Check the deposit result; if a failure, send it to the error microservice.
     code = deposit_result["code"]
-    deposit_log_message = json.dumps([deposit_result, deposit])
+    print("hello", code)
+    # deposit_log_message = json.dumps([deposit_result, deposit])
     if code not in range(200,300):
         # Inform the error microservice
         #print('\n\n-----Invoking error microservice as order fails-----')
         print('\n\n-----Publishing the (deposit error) message with routing_key=deposit.error-----')
         # invoke_http(error_URL, method="POST", json=deposit_result)
-        error_message = json.dumps(deposit_result)
+        deposit_error_message = json.dumps(deposit_result)
         amqp_setup.channel.basic_publish(exchange=amqp_setup.exchangename, routing_key="deposit.error", 
-            body=error_message, properties=pika.BasicProperties(delivery_mode = 2)) 
+            body= deposit_error_message, properties=pika.BasicProperties(delivery_mode = 2)) 
         # make message persistent within the matching queues until it is received by some receiver 
         # (the matching queues have to exist and be durable and bound to the exchange)
 
@@ -89,6 +110,17 @@ def processDeposit(deposit):
         # continue even if this invocation fails        
         # print("\nDeposit status ({:d}) published to the RabbitMQ Exchange:".format(
             # code), deposit_result)
+
+        deposit_failure_message = json.dumps([deposit_result, deposit])
+        print('hello',deposit_failure_message)
+        # 7. Sent amount deposited
+        # Invoke transaction log microservice
+        # print('\n\n-----Publishing the (deposit.transaction) message with routing_key=deposit.transaction-----') 
+        # new_transaction_log_URL = transaction_log_URL + "/" + str(user_info["data"]["accID"])
+        # invoke_http(new_transaction_log_URL, method='POST',json=deposit_log)
+        amqp_setup.channel.basic_publish(exchange=amqp_setup.exchangename, routing_key="deposit.failure.transaction", 
+                body=deposit_failure_message)
+        print("\nDeposit transaction published to transaction log\n")
 
         # 9. Return error
         return {
@@ -98,14 +130,14 @@ def processDeposit(deposit):
         }
 
     else:
-
+        deposit_success_message = json.dumps([deposit_result, deposit])
         # 7. Sent amount deposited
         # Invoke transaction log microservice
         # print('\n\n-----Publishing the (deposit.transaction) message with routing_key=deposit.transaction-----') 
         # new_transaction_log_URL = transaction_log_URL + "/" + str(user_info["data"]["accID"])
         # invoke_http(new_transaction_log_URL, method='POST',json=deposit_log)
-        amqp_setup.channel.basic_publish(exchange=amqp_setup.exchangename, routing_key="deposit.transaction", 
-                body=deposit_log_message)
+        amqp_setup.channel.basic_publish(exchange=amqp_setup.exchangename, routing_key="deposit.success.transaction", 
+                body=deposit_success_message)
         print("\nDeposit transaction published to transaction log\n")
 
     # 8. Notify trader

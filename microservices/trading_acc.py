@@ -177,25 +177,44 @@ def plus(accid):
     if trading_acc:
         user_info = request.get_json()[0]["data"]
         deposit = request.get_json()[1]
-        if (user_info['trade_accid'] == trading_acc.trade_accid) and (user_info['accid'] == trading_acc.accid):
-            trading_acc.trade_acc_balance += decimal.Decimal(deposit['amount'])
-            try:    
-                db.session.commit()
-                return jsonify(
-                    {
-                        "code": 200,
-                        "data": trading_acc.json(),
-                        "message": "Successfully updated trading account balance."
-                    }
-                )
-            except:
-                return jsonify(
-                    {
-                        "code": 500,
-                        "data": trading_acc.json(),
-                        "message": "An error occurred updating account balance. No changes has been made."
-                    }
-                )
+        # Check if trade acc id and acc id exists
+        if (user_info['trade_accid'] != trading_acc.trade_accid) or (user_info['accid'] != trading_acc.accid):
+            return jsonify(
+                {
+                    "code": 404,
+                    "data": trading_acc.json(),
+                    "message": "User's account id does not match  with trading account id."
+                }
+            )
+        
+        # Check if deposit is valid
+        if decimal.Decimal(deposit['amount']) < 0:
+            return jsonify(
+                {
+                    "code": 404,
+                    "data": trading_acc.json(),
+                    "message": "Deposit amount cannot be negative."
+                }
+            )
+
+        trading_acc.trade_acc_balance += decimal.Decimal(deposit['amount'])
+        try:    
+            db.session.commit()
+            return jsonify(
+                {
+                    "code": 200,
+                    "data": trading_acc.json(),
+                    "message": "Successfully updated trading account balance."
+                }
+            )
+        except:
+            return jsonify(
+                {
+                    "code": 500,
+                    "data": trading_acc.json(),
+                    "message": "An error occurred updating account balance. No changes has been made."
+                }
+            )
 
     return jsonify(
         {
