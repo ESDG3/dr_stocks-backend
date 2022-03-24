@@ -12,7 +12,7 @@ def get_stock_info(stock_symbol):
     msg = base64.b64decode(text)
     key = str(msg.decode('ascii'))
     finnhub_client = finnhub.Client(api_key=key)
-    if finnhub_client:
+    if finnhub_client.quote(stock_symbol)["d"] != None:
         return {
             "code" : 200,
             "data" : finnhub_client.quote(stock_symbol)

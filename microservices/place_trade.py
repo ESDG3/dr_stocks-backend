@@ -14,12 +14,12 @@ app = Flask(__name__)
 CORS(app)
 
 user_info_URL = "http://localhost:5006/account"
-trading_acc_URL = "http://localhost:5004/trading_acc/minus/"
+trading_acc_URL = "http://localhost:5004/trading_acc/minus"
 stock_info_URL = "http://localhost:5001/stock_info"
 # trade_log_URL = "http://localhost:5003/trade_log/create"
 # email_notification_URL = "http://localhost:5000/email_noti/send"
 user_stock_URL = "http://localhost:5007/user_stock/buy"
-
+plus_trading_acc_URL = "http://localhost:5004/trading_acc/plus"
 
 @app.route("/place_trade", methods=['POST'])
 def place_trade():
@@ -67,16 +67,53 @@ def processPlaceTrade(trade):
     new_user_info_URL = user_info_URL + '/email/' + trade["email"]
     user_info = invoke_http(new_user_info_URL, method='GET')
     print('user_info', user_info)
+    
+    code = user_info["code"]
+    if code not in range(200,300):
+        #4. Send error message to error microservice
+        #Inform the error microservice
+        print('\n\n-----Publishing the (user error) message with routing_key=user.error-----')
+        user_error_message = json.dumps(user_info)
+        amqp_setup.channel.basic_publish(exchange=amqp_setup.exchangename, routing_key="user.error", 
+            body=user_error_message, properties=pika.BasicProperties(delivery_mode = 2)) 
+        # make message persistent within the matching queues until it is received by some receiver 
+        # (the matching queues have to exist and be durable and bound to the exchange)
+        # delivery_mode = 2: make message persistent within the matching queues until it is received by some receiver
+
+        # 9. Return error
+        return {
+            "code": 500,
+            "data": {"user_info": user_info},
+            "message": "User not found and sent for error handling."
+        }
+    
     # 3. Retrieve stock price
     # Invoke the stock_info microservice
     print('\n-----Invoking stock_info microservice-----')
     new_stock_info_URL = stock_info_URL +  "/" + trade["stock_symbol"] 
     stock_info = invoke_http(new_stock_info_URL, method='GET')
     print('stock_info', stock_info)
+
+    code = stock_info["code"]
+    if code not in range(200,300):
+        print('\n\n-----Publishing the (user error) message with routing_key=stock_info.error-----')
+        stock_info_error_message = json.dumps(stock_info)
+        amqp_setup.channel.basic_publish(exchange=amqp_setup.exchangename, routing_key="stock_info.error", 
+            body=stock_info_error_message, properties=pika.BasicProperties(delivery_mode = 2)) 
+        # make message persistent within the matching queues until it is received by some receiver 
+        # (the matching queues have to exist and be durable and bound to the exchange)
+        # delivery_mode = 2: make message persistent within the matching queues until it is received by some receiver
+
+        # 9. Return error
+        return {
+            "code": 500,
+            "data": {"stock_info": stock_info},
+            "message": "Stock information not found and sent for error handling."
+        }
     # 4. Update trade balance if sufficient
     # Invoke the trading_acc microservice
     print('\n\n-----Invoking trading_acc microservice-----')
-    new_trade_acc_URL = trading_acc_URL + str(user_info["data"]["accid"])
+    new_trade_acc_URL = trading_acc_URL + '/' + str(user_info["data"]["accid"])
     trade_balance_result = invoke_http(new_trade_acc_URL, method='PUT', json= [stock_info, user_info, trade])
     print('trade_balance_result' , trade_balance_result)
 
@@ -84,13 +121,12 @@ def processPlaceTrade(trade):
     code = trade_balance_result["code"]
     if code not in range(200, 300):
         trade_log_message = json.dumps([trade_balance_result, trade, stock_info])
-        error_message = json.dumps(trade_balance_result)
         print('\n\n-----Publishing the (trade_log) message with routing_key = trade_log.trade-----')
         amqp_setup.channel.basic_publish(exchange=amqp_setup.exchangename, routing_key="trade_log.trade", body=trade_log_message, properties=pika.BasicProperties(delivery_mode = 2))
         print("\nTrade status ({:d}) published to the RabbitMQ Exchange:".format(
             code), trade_balance_result)
         
-
+        error_message = json.dumps(trade_balance_result)
         print('\n\n-----Publishing the (order error) message with routing_key=trade_balance.error-----')
         amqp_setup.channel.basic_publish(exchange=amqp_setup.exchangename, routing_key="trade_balance.error", body=error_message, properties=pika.BasicProperties(delivery_mode = 2))
         # - reply from the invocation is not used; 
@@ -120,13 +156,22 @@ def processPlaceTrade(trade):
     # code = trade_log_result["code"]
     # message = json.dumps(trade_balance_result)
     if code not in range(200, 300):
+        # deposit balance back into trading account
+        print('\n-----Invoking trading account microservice-----')
+        deposit = {
+            "amount" : round(stock_info["data"]["c"] * trade["stock_quantity"], 2)
+        }
+        new_plus_trading_acc_URL = plus_trading_acc_URL + '/' + str(user_info["data"]["accid"])
+        deposit_result = invoke_http(new_plus_trading_acc_URL, method='PUT',json= [user_info, deposit])
+        print('deposit_result:', deposit_result)
+
         trade_log_message = json.dumps([trade_balance_result, trade, stock_info])
-        error_message = json.dumps(trade_balance_result)
         print('\n\n-----Publishing the (trade_log) message with routing_key = trade_log.trade-----')
         amqp_setup.channel.basic_publish(exchange=amqp_setup.exchangename, routing_key="trade_log.trade", body=trade_log_message, properties=pika.BasicProperties(delivery_mode = 2))
         print("\nTrade status ({:d}) published to the RabbitMQ Exchange:".format(
             code), trade_balance_result)
 
+        error_message = json.dumps(trade_balance_result)
         print('\n\n-----Publishing the (order error) message with routing_key=order.error-----')
         amqp_setup.channel.basic_publish(exchange=amqp_setup.exchangename, routing_key="trade_log.error", body=error_message, properties=pika.BasicProperties(delivery_mode = 2))
         # - reply from the invocation is not used; 
@@ -141,9 +186,9 @@ def processPlaceTrade(trade):
             "message": "Trade creation failure sent for error handling."
         }
 
+    
     print('\n\n-----Publishing the (trade_log) message with routing_key = trade_log.trade-----')
     trade_log_message = json.dumps([trade_balance_result, trade, stock_info])
-    print('\n\n-----Publishing the (trade_log) message with routing_key = trade_log.trade-----')
     amqp_setup.channel.basic_publish(exchange=amqp_setup.exchangename, routing_key="trade_log.trade", body=trade_log_message, properties=pika.BasicProperties(delivery_mode = 2))
     print("\nTrade status ({:d}) published to the RabbitMQ Exchange:".format(
         code), trade_balance_result)
@@ -176,6 +221,7 @@ def processPlaceTrade(trade):
         "data" : {
             "stock_info" : stock_info,
             "trade_balance_result" : trade_balance_result,
+            "user_stock_result" : user_stock_result
         }
     }
 
