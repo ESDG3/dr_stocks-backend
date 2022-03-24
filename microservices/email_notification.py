@@ -26,14 +26,32 @@ def callback(channel, method, properties, body):
     print() # print a new line feed
 
 def get_stock_info(senddata):
+    system_output = senddata[0]
+    user_input = senddata[1]
     text = "U0cuN1ZPa0lCamhROHFFUDdweDdvNkFRUS53OFhmYVJ2QUYxcDZxSHBxclF6dWI5WUFteHZweUtuTm1WZkl5bVFvMXRR"
     msg = base64.b64decode(text)
     key = str(msg.decode('ascii'))
     sg = sendgrid.SendGridAPIClient(api_key=key)
     from_email = Email("dr.stocks.pte.ltd@gmail.com")  # Change to your verified sender
-    to_email = To(senddata["email"])  # Change to your recipient
-    subject = senddata["subject"]
-    content = Content("text/plain", senddata["content"])
+    to_email = To(user_input["email"])
+    if (user_input["transaction_action"] == 'DEPOSIT'):
+        subject = "Status update on your deposit"
+        if (system_output["code"] == 500):
+            content_text = "Deposit service has failed. The server faced an internal error."
+        elif (system_output["code"] > 300):
+            content_text = "Deposit service has failed. There is an error processing the deposit."
+        else:
+            content_text = "Deposit service has been successfully registered."
+    elif (user_input["transaction_action"] == 'BUY'):
+        subject = "Status update on your buying stock"
+        if (system_output["code"] == 500):
+            content_text = "Buying stock service has failed. The server faced an internal error."
+        elif (system_output["code"] > 300):
+            content_text = "Buying stock service has failed. There is an error processing the deposit."
+        else:
+            content_text = "Buying stock service has been successfully registered."
+      # Change to your recipient
+    content = Content("text/plain", content_text)
     mail = Mail(from_email, to_email, subject, content)
 
     # Get a JSON-ready representation of the Mail object

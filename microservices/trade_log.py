@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+from tkinter.tix import STATUS
 from flask import Flask, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
@@ -25,7 +26,8 @@ class Trade_Log(db.Model):
     trade_quantity = db.Column(db.Integer, nullable=False)
     currency = db.Column(db.String(3), nullable=False)
     trade_action = db.Column(db.String(20), nullable=False)
-    def __init__(self, tradeid, accid, trade_date, trade_value, trade_stock_symbol, trade_quantity, currency, trade_action):
+    status = db.Column(db.String(20), nullable=False)
+    def __init__(self, tradeid, accid, trade_date, trade_value, trade_stock_symbol, trade_quantity, currency, trade_action, status):
         self.tradeid = tradeid
         self.accid = accid
         self.trade_date = trade_date
@@ -34,6 +36,7 @@ class Trade_Log(db.Model):
         self.trade_quantity = trade_quantity
         self.currency = currency
         self.trade_action = trade_action
+        self.status = status
 
     def json(self):
         return {
@@ -44,7 +47,8 @@ class Trade_Log(db.Model):
             "trade_stock_symbol": self.trade_stock_symbol,
             "trade_quantity": self.trade_quantity,
             "currency": self.currency,
-            "trade_action": self.trade_action
+            "trade_action": self.trade_action,
+            "status" : self.status
         }
 
 monitorBindingKey = "#"
@@ -68,9 +72,17 @@ def callback(channel, method, properties, body): # required signature for the ca
 def processTradeLog(trade):
     print("Recording a trade log:")
     print(trade)
+    system_output = trade[0]
+    user_input = trade[1]
+    stock_info = trade[2]
+    trading_value = round(stock_info["data"]["c"] * user_input["stock_quantity"],2)
     now = datetime.now()
     current_time = now.strftime("%Y-%m-%d %H:%M:%S")
-    trade_log = Trade_Log(tradeid=None,accID=trade["AccID"], tradeid=trade["tradeid"], trade_date=current_time, trade_value=trade["trade_value"], trade_stock_symbol=trade["trade_stock_symbol"],trade_quantity=trade["trade_quantity"],currency=trade["currency"],trade_action=trade["trade_action"] )
+    if system_output["code"] > 300:
+        status = 'Failed'
+    else:
+        status = 'Success'
+    trade_log = Trade_Log(tradeid=None,accid=system_output["data"]["accid"], trade_date=current_time, trade_value=trading_value, trade_stock_symbol=user_input["stock_symbol"],trade_quantity=user_input["stock_quantity"],currency=user_input["currency"],trade_action=user_input["transaction_action"], status = status )
     db.session.add(trade_log)
     db.session.commit()
     print("Successful record transaction log into database")

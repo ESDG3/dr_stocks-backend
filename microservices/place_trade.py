@@ -16,8 +16,8 @@ CORS(app)
 user_info_URL = "http://localhost:5006/account"
 trading_acc_URL = "http://localhost:5004/trading_acc/minus/"
 stock_info_URL = "http://localhost:5001/stock_info"
-trade_log_URL = "http://localhost:5003/trade_log/create"
-email_notification_URL = "http://localhost:5000/email_noti/send"
+# trade_log_URL = "http://localhost:5003/trade_log/create"
+# email_notification_URL = "http://localhost:5000/email_noti/send"
 user_stock_URL = "http://localhost:5007/user_stock/buy"
 
 
@@ -53,10 +53,11 @@ def place_trade():
 
 
 #trade {
-#   "email" : "abc@gmail.com".
-#   "stock_symbol" : "AAPL"
-#   "stock_qty" : 5
-#   "currency" : "USD"
+#   "email" : "abc@gmail.com",
+#   "stock_symbol" : "AAPL",
+#   "stock_quantity" : 5,
+#   "currency" : "USD",
+#   "transaction_action" : "buy"
 # }
 def processPlaceTrade(trade):
 
@@ -81,17 +82,17 @@ def processPlaceTrade(trade):
 
     # Check the trade balance result; if a failure, send it to error microservice
     code = trade_balance_result["code"]
-    message = json.dumps(trade_balance_result)
     if code not in range(200, 300):
-
+        trade_log_message = json.dumps([trade_balance_result, trade, stock_info])
+        error_message = json.dumps(trade_balance_result)
         print('\n\n-----Publishing the (trade_log) message with routing_key = trade_log.trade-----')
-        amqp_setup.channel.basic_publish(exchange=amqp_setup.exchangename, routing_key="trade_log.trad", body=message, properties=pika.BasicProperties(delivery_mode = 2))
+        amqp_setup.channel.basic_publish(exchange=amqp_setup.exchangename, routing_key="trade_log.trade", body=trade_log_message, properties=pika.BasicProperties(delivery_mode = 2))
         print("\nTrade status ({:d}) published to the RabbitMQ Exchange:".format(
             code), trade_balance_result)
         
 
         print('\n\n-----Publishing the (order error) message with routing_key=trade_balance.error-----')
-        amqp_setup.channel.basic_publish(exchange=amqp_setup.exchangename, routing_key="trade_balance.error", body=message, properties=pika.BasicProperties(delivery_mode = 2))
+        amqp_setup.channel.basic_publish(exchange=amqp_setup.exchangename, routing_key="trade_balance.error", body=error_message, properties=pika.BasicProperties(delivery_mode = 2))
         # - reply from the invocation is not used; 
         # continue even if this invocation fails
         print("\nTrade status ({:d}) published to the RabbitMQ Exchange:".format(
@@ -108,21 +109,26 @@ def processPlaceTrade(trade):
     new_user_stock_URL = user_stock_URL + '/' + str(user_info["data"]["accid"])
     user_stock_result = invoke_http(new_user_stock_URL, method='POST', json= [stock_info, user_info, trade])
     print('user_stock_result' , user_stock_result)
-
-
+    code = user_stock_result["code"]
     # 5. Record trade activity
     # Invoke the trade_log microservice
-    print('\n\n-----Invoking trade_log microservice-----')
-    new_trade_log_URL = trade_log_URL + '/' + str(user_info["data"]["accid"])
-    trade_log_result = invoke_http(new_trade_log_URL, method='POST', json=[user_info, stock_info, trade])
-    print('trade_log_result' , trade_log_result)
+    # print('\n\n-----Invoking trade_log microservice-----')
+    # new_trade_log_URL = trade_log_URL + '/' + str(user_info["data"]["accid"])
+    # trade_log_result = invoke_http(new_trade_log_URL, method='POST', json=[user_info, stock_info, trade])
+    # print('trade_log_result' , trade_log_result)
     
-    code = trade_log_result["code"]
-    message = json.dumps(trade_balance_result)
-    
+    # code = trade_log_result["code"]
+    # message = json.dumps(trade_balance_result)
     if code not in range(200, 300):
+        trade_log_message = json.dumps([trade_balance_result, trade, stock_info])
+        error_message = json.dumps(trade_balance_result)
+        print('\n\n-----Publishing the (trade_log) message with routing_key = trade_log.trade-----')
+        amqp_setup.channel.basic_publish(exchange=amqp_setup.exchangename, routing_key="trade_log.trade", body=trade_log_message, properties=pika.BasicProperties(delivery_mode = 2))
+        print("\nTrade status ({:d}) published to the RabbitMQ Exchange:".format(
+            code), trade_balance_result)
+
         print('\n\n-----Publishing the (order error) message with routing_key=order.error-----')
-        amqp_setup.channel.basic_publish(exchange=amqp_setup.exchangename, routing_key="trade_log.error", body=message, properties=pika.BasicProperties(delivery_mode = 2))
+        amqp_setup.channel.basic_publish(exchange=amqp_setup.exchangename, routing_key="trade_log.error", body=error_message, properties=pika.BasicProperties(delivery_mode = 2))
         # - reply from the invocation is not used; 
         # continue even if this invocation fails
         print("\nOrder status ({:d}) published to the RabbitMQ Exchange:".format(
@@ -134,41 +140,42 @@ def processPlaceTrade(trade):
             "data": {"trade_balance_result": trade_balance_result},
             "message": "Trade creation failure sent for error handling."
         }
-    
-    email_notification_json = {
-        "Email" : trade["Email"],
-        "Subject" : "Update on your trading status",
-        "Content" : trade_log_result["message"],
-    }
+
+    print('\n\n-----Publishing the (trade_log) message with routing_key = trade_log.trade-----')
+    trade_log_message = json.dumps([trade_balance_result, trade, stock_info])
+    print('\n\n-----Publishing the (trade_log) message with routing_key = trade_log.trade-----')
+    amqp_setup.channel.basic_publish(exchange=amqp_setup.exchangename, routing_key="trade_log.trade", body=trade_log_message, properties=pika.BasicProperties(delivery_mode = 2))
+    print("\nTrade status ({:d}) published to the RabbitMQ Exchange:".format(
+        code), trade_balance_result)
     #6. Send trade confirmation
     # Invoke email_notification microservice
-    print('\n\n-----Invoking email_notification microservice-----')
-    email_notification_result = invoke_http(email_notification_URL, method='POST', json=email_notification_json)
-    code = int(email_notification_result["code"])
-    print('email_notification_result' , email_notification_result)
+    print('\n\n-----Publishing the (email) message with routing_key=email.log-----') 
+    # invoke_http(email_notification_URL, method='POST',json=deposit_log)           
+    email_log_message = json.dumps([user_stock_result, trade])
+    amqp_setup.channel.basic_publish(exchange=amqp_setup.exchangename, routing_key="email.log", 
+        body=email_log_message)
+    print("\nDeposit action performed and notified user.\n")
     
-    if code not in range(200, 300):
-        print('\n\n-----Publishing the (order error) message with routing_key=email_notification.error-----')
-        amqp_setup.channel.basic_publish(exchange=amqp_setup.exchangename, routing_key="email_notification.error", body=message, properties=pika.BasicProperties(delivery_mode = 2))
-        # - reply from the invocation is not used; 
-        # continue even if this invocation fails
-        print("\nOrder status ({:d}) published to the RabbitMQ Exchange:".format(
-            code), trade_balance_result)
+    # if code not in range(200, 300):
+    #     print('\n\n-----Publishing the (order error) message with routing_key=email_notification.error-----')
+    #     amqp_setup.channel.basic_publish(exchange=amqp_setup.exchangename, routing_key="email_notification.error", body=message, properties=pika.BasicProperties(delivery_mode = 2))
+    #     # - reply from the invocation is not used; 
+    #     # continue even if this invocation fails
+    #     print("\nOrder status ({:d}) published to the RabbitMQ Exchange:".format(
+    #         code), trade_balance_result)
 
-        # Return error
-        return {
-            "code": 500,
-            "data": {"trade_balance_result": trade_balance_result},
-            "message": "Trade creation failure sent for error handling."
-        }
+    #     # Return error
+    #     return {
+    #         "code": 500,
+    #         "data": {"trade_balance_result": trade_balance_result},
+    #         "message": "Trade creation failure sent for error handling."
+    #     }
 
     return {
         "code": 201,
         "data" : {
             "stock_info" : stock_info,
             "trade_balance_result" : trade_balance_result,
-            "trade_log_result" : trade_log_result,
-            "email_notification_result" : email_notification_result,
         }
     }
 
