@@ -15,8 +15,8 @@ class Stock_Pref(db.Model):
     stock_prefid = db.Column(db.Integer, primary_key=True, nullable=False)
     accid = db.Column(db.Integer, nullable=False)
     stock_industry = db.Column(db.String(100), nullable=False)
-    def __init__(self, stock_prefID, accid, stock_industry):
-        self.stock_prefid = stock_prefID
+    def __init__(self, stock_prefid, accid, stock_industry):
+        self.stock_prefid = stock_prefid
         self.accid = accid
         self.stock_industry = stock_industry
 
@@ -47,8 +47,8 @@ def get_all():
         }
     ), 404
 
-@app.route("/stock_pref/<string:accID>")
-def find_by_accID(accID):
+@app.route("/stock_pref/<string:accid>")
+def find_by_accID(accid):
     user_stock_pref = Stock_Pref.query.filter_by(accid=accid) #.first()
     if user_stock_pref:
         return jsonify(
