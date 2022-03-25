@@ -1,10 +1,13 @@
 from flask import Flask, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
+import os
+from os import environ
 
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+mysqlconnector://root@localhost:3306/userDB'
+app.config['SQLALCHEMY_DATABASE_URI'] = environ.get('dbURL') or 'mysql+mysqlconnector://root@localhost:3306/userDB'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {'pool_recycle': 299}
 
 CORS(app)
 
@@ -91,4 +94,5 @@ def find_by_accID(email):
     ), 404
 
 if __name__ == '__main__':
-    app.run(port=5006, debug=True)
+    print("This is flask for " + os.path.basename(__file__) + ": manage orders ...")
+    app.run(host='0.0.0.0', port=5006, debug=True)
