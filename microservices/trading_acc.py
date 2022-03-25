@@ -2,11 +2,14 @@ from locale import currency
 from flask import Flask, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
+import os
+from os import environ
 import decimal
 
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+mysqlconnector://root@localhost:3306/trading_accDB'
+app.config['SQLALCHEMY_DATABASE_URI'] = environ.get('dbURL') or 'mysql+mysqlconnector://root@localhost:3306/trading_accDB'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {'pool_recycle': 299}
 
 CORS(app)
 
@@ -267,7 +270,8 @@ def delete_trading_acc(accid):
 
 
 if __name__ == '__main__':
-    app.run(port=5004, debug=True)
+    print("This is flask for " + os.path.basename(__file__) + ": manage orders ...")
+    app.run(host='0.0.0.0',port=5004, debug=True)
 
 
 

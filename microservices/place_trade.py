@@ -2,6 +2,7 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 
 import os, sys
+from os import environ
 
 import requests
 from invokes import invoke_http
@@ -13,13 +14,12 @@ import json
 app = Flask(__name__)
 CORS(app)
 
-user_info_URL = "http://localhost:5006/account"
-trading_acc_URL = "http://localhost:5004/trading_acc/minus"
-stock_info_URL = "http://localhost:5001/stock_info"
+user_info_URL = environ.get('user_info_URL') or "http://localhost:5006/account"
+trading_acc_URL = environ.get('trading_acc_URL') or "http://localhost:5004/trading_acc"
+stock_info_URL = environ.get('stock_info_URL') or "http://localhost:5001/stock_info"
 # trade_log_URL = "http://localhost:5003/trade_log/create"
 # email_notification_URL = "http://localhost:5000/email_noti/send"
-user_stock_URL = "http://localhost:5007/user_stock/buy"
-plus_trading_acc_URL = "http://localhost:5004/trading_acc/plus"
+user_stock_URL = environ.get('user_stock_URL') or "http://localhost:5007/user_stock/buy"
 
 @app.route("/place_trade", methods=['POST'])
 def place_trade():
@@ -113,7 +113,7 @@ def processPlaceTrade(trade):
     # 4. Update trade balance if sufficient
     # Invoke the trading_acc microservice
     print('\n\n-----Invoking trading_acc microservice-----')
-    new_trade_acc_URL = trading_acc_URL + '/' + str(user_info["data"]["accid"])
+    new_trade_acc_URL = trading_acc_URL + '/minus/' + str(user_info["data"]["accid"])
     trade_balance_result = invoke_http(new_trade_acc_URL, method='PUT', json= [stock_info, user_info, trade])
     print('trade_balance_result' , trade_balance_result)
 
@@ -161,8 +161,8 @@ def processPlaceTrade(trade):
         deposit = {
             "amount" : round(stock_info["data"]["c"] * trade["stock_quantity"], 2)
         }
-        new_plus_trading_acc_URL = plus_trading_acc_URL + '/' + str(user_info["data"]["accid"])
-        deposit_result = invoke_http(new_plus_trading_acc_URL, method='PUT',json= [user_info, deposit])
+        new_trade_acc_URL = trading_acc_URL + '/plus/' + str(user_info["data"]["accid"])
+        deposit_result = invoke_http(new_trade_acc_URL, method='PUT',json= [user_info, deposit])
         print('deposit_result:', deposit_result)
 
         trade_log_message = json.dumps([trade_balance_result, trade, stock_info])
@@ -227,4 +227,5 @@ def processPlaceTrade(trade):
 
 
 if __name__ == '__main__':
-    app.run(port=5100, debug=True)
+    print("This is flask " + os.path.basename(__file__) + " for placing an trade...")
+    app.run(host="0.0.0.0", port=5100, debug=True)

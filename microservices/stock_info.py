@@ -1,8 +1,13 @@
 from flask import Flask, request, jsonify
 import finnhub, base64
 from flask_cors import CORS
+from os import environ
+import os
 
 app = Flask(__name__)
+app.config['SQLALCHEMY_DATABASE_URI'] = environ.get('dbURL') or 'mysql+mysqlconnector://root@localhost:3306/stock_infoDB'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {'pool_recycle': 299}
 CORS(app)
 
 #GET
@@ -25,4 +30,5 @@ def get_stock_info(stock_symbol):
     
 
 if __name__ == '__main__':
-    app.run(port=5001, debug=True)
+    print("This is flask for " + os.path.basename(__file__) + ": manage orders ...")
+    app.run(host='0.0.0.0', port=5001, debug=True)

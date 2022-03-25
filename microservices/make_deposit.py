@@ -14,9 +14,9 @@ import json
 app = Flask(__name__)
 CORS(app)
 
-trading_acc_URL = "http://localhost:5004/trading_acc/plus"
+trading_acc_URL = environ.get('trading_acc_URL') or "http://localhost:5004/trading_acc/plus"
 # transaction_log_URL = "http://localhost:5005/trans_log/create"
-user_info_URL = "http://localhost:5006/account/email"
+user_info_URL = environ.get('user_info_URL') or "http://localhost:5006/account/email"
 # email_notification_URL = "http://localhost:5003/email_noti/send"
 # error_URL = "http://localhost:5008/error"
 
@@ -161,4 +161,5 @@ def processDeposit(deposit):
     }
 
 if __name__ == '__main__':
-    app.run(port=5101, debug=True)
+    print("This is flask " + os.path.basename(__file__) + " for placing a deposit...")
+    app.run(host="0.0.0.0", port=5101, debug=True)

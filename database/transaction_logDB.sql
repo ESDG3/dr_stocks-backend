@@ -11,7 +11,7 @@ CREATE TABLE IF NOT EXISTS `transaction_log` (
   `transaction_value` DECIMAL(13, 2) NOT NULL,
   `transaction_date` DATETIME NOT NULL,
   `currency` CHAR(3) NOT NULL,
-  `status` VARCHAR(20) NOT NULL
+  `status` VARCHAR(20) NOT NULL,
   PRIMARY KEY (`transactionid`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
