@@ -34,7 +34,9 @@ def get_stock_info(senddata):
     sg = sendgrid.SendGridAPIClient(api_key=key)
     from_email = Email("dr.stocks.pte.ltd@gmail.com")  # Change to your verified sender
     to_email = To(user_input["email"])
-    if (user_input["transaction_action"] == 'DEPOSIT'):
+    subject = ""
+    content_text = ""
+    if (str(user_input["transaction_action"]).upper() == 'DEPOSIT'):
         subject = "Status update on your deposit"
         if (system_output["code"] == 500):
             content_text = "Deposit service has failed. The server faced an internal error."
@@ -42,7 +44,7 @@ def get_stock_info(senddata):
             content_text = "Deposit service has failed. There is an error processing the deposit."
         else:
             content_text = "Deposit service has been successfully registered."
-    elif (user_input["transaction_action"] == 'BUY'):
+    elif (str(user_input["transaction_action"]).upper() == 'BUY'):
         subject = "Status update on your buying stock"
         if (system_output["code"] == 500):
             content_text = "Buying stock service has failed. The server faced an internal error."
@@ -50,6 +52,9 @@ def get_stock_info(senddata):
             content_text = "Buying stock service has failed. There is an error processing the deposit."
         else:
             content_text = "Buying stock service has been successfully registered."
+    else:
+        subject = "Error occured when processing your request"
+        content_text = "There is an error processing your request."
       # Change to your recipient
     content = Content("text/plain", content_text)
     mail = Mail(from_email, to_email, subject, content)

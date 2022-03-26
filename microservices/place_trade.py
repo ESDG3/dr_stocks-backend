@@ -23,6 +23,7 @@ user_stock_URL = environ.get('user_stock_URL') or "http://localhost:5007/user_st
 
 @app.route("/place_trade", methods=['POST'])
 def place_trade():
+    head_apikey = request.args.get('apikey')
     # Simple check of input format and data of the request are JSON
     if request.is_json:
         try:
@@ -31,7 +32,7 @@ def place_trade():
 
             # do the actual work
             # 1. Send trade info
-            result = processPlaceTrade(trade)
+            result = processPlaceTrade(trade, head_apikey)
             return jsonify(result), result["code"]
         
         except Exception as e:
@@ -59,13 +60,13 @@ def place_trade():
 #   "currency" : "USD",
 #   "transaction_action" : "buy"
 # }
-def processPlaceTrade(trade):
+def processPlaceTrade(trade, head_apikey):
 
     # 2.Retrieve trade_accid
     # Inoke the user_info microservice
     print('\n-----Invoking user_info microservice-----')
     new_user_info_URL = user_info_URL + '/email/' + trade["email"]
-    user_info = invoke_http(new_user_info_URL, method='GET')
+    user_info = invoke_http(new_user_info_URL, method='GET', headers={'apikey': head_apikey})
     print('user_info', user_info)
     
     code = user_info["code"]
@@ -224,6 +225,34 @@ def processPlaceTrade(trade):
             "user_stock_result" : user_stock_result
         }
     }
+
+# Error Handling 
+@app.errorhandler(404) 
+def invalid_route(e): 
+    return jsonify(
+        {
+            "code": 404,
+            "message": "Invalid route."
+        }
+    ), 404
+
+@app.errorhandler(500) 
+def invalid_route(e): 
+    return jsonify(
+        {
+            "code": 500,
+            "message": "Unexpected error occured."
+        }
+    ), 500
+
+@app.errorhandler(405) 
+def invalid_route(e): 
+    return jsonify(
+        {
+            "code": 405,
+            "message": "Action not allowed."
+        }
+    ), 405
 
 
 if __name__ == '__main__':

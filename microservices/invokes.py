@@ -4,7 +4,7 @@ SUPPORTED_HTTP_METHODS = set([
     "GET", "OPTIONS", "HEAD", "POST", "PUT", "PATCH", "DELETE"
 ])
 
-def invoke_http(url, method='GET', json=None, **kwargs):
+def invoke_http(url, method='GET', json=None, headers=None,  **kwargs):
     """A simple wrapper for requests methods.
        url: the url of the http service;
        method: the http method;
@@ -17,7 +17,7 @@ def invoke_http(url, method='GET', json=None, **kwargs):
 
     try:
         if method.upper() in SUPPORTED_HTTP_METHODS:
-            r = requests.request(method, url, json = json, **kwargs)
+            r = requests.request(method, url, json = json, headers = headers, **kwargs)
         else:
             raise Exception("HTTP method {} unsupported.".format(method))
     except Exception as e:

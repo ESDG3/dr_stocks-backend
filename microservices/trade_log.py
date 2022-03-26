@@ -83,7 +83,7 @@ def processTradeLog(trade):
         status = 'FAILED'
     else:
         status = 'SUCCESS'
-    trade_log = Trade_Log(tradeid=None,accid=system_output["data"]["accid"], trade_date=current_time, trade_value=trading_value, trade_stock_symbol=user_input["stock_symbol"],trade_quantity=user_input["stock_quantity"],currency=user_input["currency"],trade_action=user_input["transaction_action"], status = status )
+    trade_log = Trade_Log(tradeid=None,accid=system_output["data"]["accid"], trade_date=current_time, trade_value=trading_value, trade_stock_symbol=str(user_input["stock_symbol"]).upper(),trade_quantity=user_input["stock_quantity"],currency=str(user_input["currency"]).upper(),trade_action=str(user_input["transaction_action"]).upper(), status=str(status).upper())
     db.session.add(trade_log)
     db.session.commit()
     print("Successful record transaction log into database")

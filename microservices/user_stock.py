@@ -65,8 +65,15 @@ def get_all():
 
 @app.route("/user_stock/<string:accid>")
 def find_by_accID(accid):
+    if len(str(accid)) != 7 or (not str(accid).isdigit):
+        return jsonify(
+            {
+                "code": 404,
+                "message": "Invalid account ID."
+            }
+        ), 404
     user_stock_list = User_Stock.query.filter_by(accid=accid)#.first()
-    if user_stock_list:
+    if user_stock_list.first():
         return jsonify(
             {
                 "code": 200,
@@ -76,7 +83,7 @@ def find_by_accID(accid):
     return jsonify(
         {
             "code": 404,
-            "message": "No such stock found."
+            "message": "No user stock found."
         }
     ), 404
 
@@ -99,9 +106,7 @@ def buying_user_stock(accid):
         user_stock = User_Stock(user_stockid="",accid=accid, tradeid=user_info["trade_accid"], stock_symbol=str(trade["stock_symbol"]).upper(), stock_quantity=trade["stock_quantity"], purchased_price=stock_info["c"], currency=str(trade["currency"]).upper())
         db.session.add(user_stock)
         db.session.commit()
-        
     except:
-        
         return jsonify(
             {
                 "code": 500,
@@ -160,6 +165,34 @@ def selling_user_stock(accid):
         )
 
 #Need find a way to combine stocks and account for selling of all stocks
+
+# Error Handling 
+@app.errorhandler(404) 
+def invalid_route(e): 
+    return jsonify(
+        {
+            "code": 404,
+            "message": "Invalid route."
+        }
+    ), 404
+
+@app.errorhandler(500) 
+def invalid_route(e): 
+    return jsonify(
+        {
+            "code": 500,
+            "message": "Unexpected error occured."
+        }
+    ), 500
+
+@app.errorhandler(405) 
+def invalid_route(e): 
+    return jsonify(
+        {
+            "code": 405,
+            "message": "Action not allowed."
+        }
+    ), 405
 
 
 if __name__ == '__main__':

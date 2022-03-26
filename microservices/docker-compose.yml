@@ -2,8 +2,94 @@ version: "3.8"
 
 volumes:
   rabbitmq_data:
+  pgdata: 
+  kongadata:
+
+networks:
+  kong-net:
+    driver: bridge
 
 services:
+  #######################################
+  # Postgres: The database used by Kong
+  #######################################
+  kong-database:
+    image: postgres:9.6
+    restart: always
+    networks:
+      - kong-net
+    environment:
+      POSTGRES_DB: kong
+      POSTGRES_USER: kong
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "kong"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  #######################################
+  # Kong database migration
+  #######################################
+  kong-migration:
+    image: kong:2.0.4
+    command: "kong migrations bootstrap"
+    restart: on-failure
+    networks:
+      - kong-net
+    environment:
+      KONG_DATABASE: postgres
+      KONG_PG_HOST: kong-database
+      KONG_PG_USER: kong
+      KONG_PG_PASSWORD: password
+    depends_on:
+      - kong-database
+
+  #######################################
+  # Kong: The API Gateway
+  #######################################
+  kong:
+    image: kong:2.0.4
+    restart: always
+    networks:
+      - kong-net
+    environment:
+      KONG_DATABASE: postgres
+      KONG_PG_HOST: kong-database
+      KONG_PG_USER: kong
+      KONG_PG_PASSWORD: password
+      KONG_PROXY_LISTEN: 0.0.0.0:8000
+      KONG_ADMIN_LISTEN: 0.0.0.0:8001
+    depends_on:
+      - kong-migration
+    ports:
+      - "8000:8000"
+  
+  #######################################
+  # Konga: Kong GUI
+  #######################################
+  konga:
+    image: pantsel/konga
+    restart: always
+    networks:
+        - kong-net
+    environment:
+      DB_ADAPTER: postgres
+      DB_HOST: kong-database
+      DB_USER: kong
+      DB_PASSWORD: password
+      DB_DATABASE: konga_db
+    depends_on:
+      - kong
+    ports:
+      - "1337:1337"
+    volumes:
+      - kongadata:/app/kongadata
+
   ####################################
   # stock_info : The stock_info microservice
   ####################################
@@ -11,8 +97,10 @@ services:
     build:
       context: ./
       dockerfile: stock_info.Dockerfile
-    image: ndp2012/stock_info:esd
+    image: markytan/stock_info:esd
     restart: always
+    networks:
+      - kong-net
     environment:
       dbURL: mysql+mysqlconnector://is213@host.docker.internal:3306/stock_infoDB
       PYTHONUNBUFFERED: 1
@@ -26,8 +114,10 @@ services:
     build:
       context: ./
       dockerfile: stock_pref.Dockerfile
-    image: ndp2012/stock_pref:esd
+    image: markytan/stock_pref:esd
     restart: always
+    networks:
+      - kong-net
     environment:
       dbURL: mysql+mysqlconnector://is213@host.docker.internal:3306/stock_prefDB
       PYTHONUNBUFFERED: 1
@@ -41,8 +131,10 @@ services:
     build:
       context: ./
       dockerfile: trading_acc.Dockerfile
-    image: ndp2012/trading_acc:esd
+    image: markytan/trading_acc:esd
     restart: always
+    networks:
+      - kong-net
     environment:
       dbURL: mysql+mysqlconnector://is213@host.docker.internal:3306/trading_accDB
       PYTHONUNBUFFERED: 1
@@ -56,8 +148,10 @@ services:
     build:
       context: ./
       dockerfile: user_info.Dockerfile
-    image: ndp2012/user_info:esd
+    image: markytan/user_info:esd
     restart: always
+    networks:
+      - kong-net
     environment:
       dbURL: mysql+mysqlconnector://is213@host.docker.internal:3306/userDB
       PYTHONUNBUFFERED: 1
@@ -71,8 +165,10 @@ services:
     build:
       context: ./
       dockerfile: user_stock.Dockerfile
-    image: ndp2012/user_stock:esd
+    image: markytan/user_stock:esd
     restart: always
+    networks:
+      - kong-net
     environment:
       dbURL: mysql+mysqlconnector://is213@host.docker.internal:3306/user_stockDB
       PYTHONUNBUFFERED: 1
@@ -86,6 +182,8 @@ services:
     image: rabbitmq:3-management
     hostname: esd-rabbit
     restart: always
+    networks:
+      - kong-net
     ports:
       - "5672:5672"
       - "15672:15672"
@@ -99,8 +197,10 @@ services:
     build:
       context: ./
       dockerfile: email_notification.Dockerfile
-    image: ndp2012/email_notification:esd
+    image: markytan/email_notification:esd
     restart: always
+    networks:
+      - kong-net
     depends_on:
       - rabbitmq
     environment:
@@ -115,8 +215,10 @@ services:
     build:
       context: ./
       dockerfile: error.Dockerfile
-    image: ndp2012/error:esd
+    image: markytan/error:esd
     restart: always
+    networks:
+      - kong-net
     depends_on:
       - rabbitmq
     environment:
@@ -131,8 +233,10 @@ services:
     build:
       context: ./
       dockerfile: trade_log.Dockerfile
-    image: ndp2012/trade_log:esd
+    image: markytan/trade_log:esd
     restart: always
+    networks:
+      - kong-net
     depends_on:
       - rabbitmq
     environment:
@@ -150,8 +254,10 @@ services:
     build:
       context: ./
       dockerfile: transaction_log.Dockerfile
-    image: ndp2012/transaction_log:esd
+    image: markytan/transaction_log:esd
     restart: always
+    networks:
+      - kong-net
     depends_on:
       - rabbitmq
     environment:
@@ -169,8 +275,10 @@ services:
     build:
       context: ./
       dockerfile: place_trade.Dockerfile
-    image: ndp2012/place_trade:esd
+    image: markytan/place_trade:esd
     restart: always
+    networks:
+      - kong-net
     depends_on:
       - user_info
       - trading_acc
@@ -198,8 +306,10 @@ services:
     build:
       context: ./
       dockerfile: make_deposit.Dockerfile
-    image: ndp2012/make_deposit:esd
+    image: markytan/make_deposit:esd
     restart: always
+    networks:
+      - kong-net
     depends_on:
       - user_info
       - trading_acc
@@ -215,3 +325,5 @@ services:
       PYTHONUNBUFFERED: 1
     ports:
       - "5101:5101"
+  
+  

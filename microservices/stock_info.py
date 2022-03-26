@@ -13,6 +13,14 @@ CORS(app)
 #GET
 @app.route("/stock_info/<string:stock_symbol>")
 def get_stock_info(stock_symbol):
+    stock_symbol = str(stock_symbol).upper()
+    if (not stock_symbol.isalpha()) or (len(stock_symbol) > 5):
+        return jsonify(
+            {
+                "code": 404,
+                "message": "Invalid stock symbol."
+            }
+        ), 404
     text = "YzhtNWZrYWFkM2k5aHVjcDk4NzA="
     msg = base64.b64decode(text)
     key = str(msg.decode('ascii'))
@@ -27,6 +35,34 @@ def get_stock_info(stock_symbol):
             "code" : 500,
             "message" : "Unexpected error has occurred. Please try again later"
         }
+
+# Error Handling 
+@app.errorhandler(404) 
+def invalid_route(e): 
+    return jsonify(
+        {
+            "code": 404,
+            "message": "Invalid route."
+        }
+    ), 404
+
+@app.errorhandler(500) 
+def invalid_route(e): 
+    return jsonify(
+        {
+            "code": 500,
+            "message": "Unexpected error occured."
+        }
+    ), 500
+
+@app.errorhandler(405) 
+def invalid_route(e): 
+    return jsonify(
+        {
+            "code": 405,
+            "message": "Action not allowed."
+        }
+    ), 405
     
 
 if __name__ == '__main__':

@@ -56,8 +56,23 @@ def get_all():
         }
     ), 404
 
-@app.route("/trading_acc/<string:accID>/<string:currency>")
-def find_by_accID(accid, currency):
+@app.route("/trading_acc/<string:accid>/<string:currency>")
+def find_by_accid(accid, currency):
+    currency = str(currency).upper()
+    if (len(str(accid)) != 7) or (not str(accid).isdigit):
+        return jsonify(
+            {
+                "code": 404,
+                "message": "Invalid account ID."
+            }
+        ), 404
+    if not str(currency).isalpha():
+        return jsonify(
+            {
+                "code": 404,
+                "message": "Invalid currency."
+            }
+        ), 404
     trading_acc = Trading_Acc.query.filter_by(accid=accid, currency=currency).first()
     if trading_acc:
         return jsonify(
@@ -267,6 +282,34 @@ def delete_trading_acc(accid):
                 "message": "An error occurred deleting trading account."
             }
         ), 500
+
+# Error Handling 
+@app.errorhandler(404) 
+def invalid_route(e): 
+    return jsonify(
+        {
+            "code": 404,
+            "message": "Invalid route."
+        }
+    ), 404
+
+@app.errorhandler(500) 
+def invalid_route(e): 
+    return jsonify(
+        {
+            "code": 500,
+            "message": "Unexpected error occured."
+        }
+    ), 500
+
+@app.errorhandler(405) 
+def invalid_route(e): 
+    return jsonify(
+        {
+            "code": 405,
+            "message": "Action not allowed."
+        }
+    ), 405
 
 
 if __name__ == '__main__':

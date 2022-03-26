@@ -28,6 +28,7 @@ user_info_URL = environ.get('user_info_URL') or "http://localhost:5006/account/e
 # }
 @app.route("/make_deposit", methods=['POST'])
 def make_deposit():
+    head_apikey = request.args.get('apikey')
     # Simple check of input format and data of the request are JSON
     if request.is_json:
         try:
@@ -36,7 +37,7 @@ def make_deposit():
 
             # do the actual work
             # 2. Accept Deposit amount
-            result = processDeposit(deposit)
+            result = processDeposit(deposit, head_apikey)
             return jsonify(result), result["code"]
 
         except Exception as e:
@@ -57,12 +58,12 @@ def make_deposit():
         "message": "Invalid JSON input: " + str(request.get_data())
     }), 400
 
-def processDeposit(deposit):
+def processDeposit(deposit, head_apikey):
     # 3. Retrieve the amount trader has 
     # Invoke the user info microservice
     print('\n-----Invoking user_info microservice-----')
     new_user_info_URL = user_info_URL + '/' + deposit["email"]
-    user_info = invoke_http(new_user_info_URL, method='GET')
+    user_info = invoke_http(new_user_info_URL, method='GET', headers={'apikey': head_apikey})
     print("user_info", user_info)
 
     code = user_info["code"]
@@ -159,6 +160,35 @@ def processDeposit(deposit):
         "code": 201,
         "data": {"deposit_log": deposit_result}
     }
+
+
+# Error Handling 
+@app.errorhandler(404) 
+def invalid_route(e): 
+    return jsonify(
+        {
+            "code": 404,
+            "message": "Invalid route."
+        }
+    ), 404
+
+@app.errorhandler(500) 
+def invalid_route(e): 
+    return jsonify(
+        {
+            "code": 500,
+            "message": "Unexpected error occured."
+        }
+    ), 500
+
+@app.errorhandler(405) 
+def invalid_route(e): 
+    return jsonify(
+        {
+            "code": 405,
+            "message": "Action not allowed."
+        }
+    ), 405
 
 if __name__ == '__main__':
     print("This is flask " + os.path.basename(__file__) + " for placing a deposit...")

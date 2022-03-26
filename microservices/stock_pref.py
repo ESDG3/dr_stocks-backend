@@ -51,8 +51,15 @@ def get_all():
 
 @app.route("/stock_pref/<string:accid>")
 def find_by_accID(accid):
+    if len(str(accid)) != 7 or (not str(accid).isdigit):
+        return jsonify(
+            {
+                "code": 404,
+                "message": "Invalid account ID."
+            }
+        ), 404
     user_stock_pref = Stock_Pref.query.filter_by(accid=accid) #.first()
-    if user_stock_pref:
+    if user_stock_pref.first():
         return jsonify(
             {
                 "code": 200,
@@ -73,7 +80,6 @@ def create_stock_pref(accid):
     #Variables
     to_add_list, added_list, success_list, error_list  = [], [], [], []
     senddata = request.get_json()
-
     #Check if accID matches
     if (str(accid) != str(senddata['accid'])):
         return jsonify(
@@ -203,6 +209,35 @@ def delete_stock_pref(accid):
                 "message": "Stock preference successfully deleted."
             }
         )
+
+# Error Handling 
+@app.errorhandler(404) 
+def invalid_route(e): 
+    return jsonify(
+        {
+            "code": 404,
+            "message": "Invalid route."
+        }
+    ), 404
+
+@app.errorhandler(500) 
+def invalid_route(e): 
+    return jsonify(
+        {
+            "code": 500,
+            "message": "Unexpected error occured."
+        }
+    ), 500
+
+@app.errorhandler(405) 
+def invalid_route(e): 
+    return jsonify(
+        {
+            "code": 405,
+            "message": "Action not allowed."
+        }
+    ), 405
+
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5002, debug=True)
