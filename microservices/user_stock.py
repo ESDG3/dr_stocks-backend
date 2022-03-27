@@ -39,7 +39,7 @@ class User_Stock(db.Model):
             "tradeid": self.tradeid, 
             "stock_symbol": self.stock_symbol,
             "stock_quantity": self.stock_quantity,
-            "purchased_price,": self.purchased_price,
+            "purchased_price": self.purchased_price,
             "currency": self.currency
         }
 
