@@ -1,10 +1,9 @@
 #!/usr/bin/env python3
+import json, os
 from flask import Flask, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
 from flask_cors import CORS
-import json
-import os
 from os import environ
 
 import amqp_setup
@@ -82,86 +81,6 @@ def processTransactionLog(transaction):
     db.session.add(trans_log)
     db.session.commit()
     print("Successful record transaction log into database")
-#GET
-# @app.route("/trans_log/all")
-# def get_all():
-#     trans_log_list = Trans_Log.query.all()
-#     if len(trans_log_list):
-#         return jsonify(
-#             {
-#                 "code": 200,
-#                 "data": {
-#                     "trans_logs": [trans.json() for trans in trans_log_list]
-#                 }
-#             }
-#         )
-#     return jsonify(
-#         {
-#             "code": 404,
-#             "message": "There is no transaction activity."
-#         }
-#     ), 404
-
-# @app.route("/trans_log/<string:accid>")
-# def find_by_accID(accid):
-#     user_transaction_log = Trans_Log.query.filter_by(accid=accid) #.first()
-#     if user_transaction_log:
-#         return jsonify(
-#             {
-#                 "code": 200,
-#                 "data": [trans.json() for trans in user_transaction_log]
-#             }
-#         )
-#     return jsonify(
-#         {
-#             "code": 404,
-#             "message": "There is no transaction activity."
-#         }
-#     ), 404
-
-
-#POST
-# @app.route("/trans_log/create/<string:accid>", methods=['POST'])
-# def create_trade_log(accid):
-#     senddata = request.get_json()
-#     #Check if accID matches
-#     if (str(accid) != str(senddata['accid'])):
-#         return jsonify(
-#             {
-#                 "code": 401,
-#                 "message": "Unauthorised action performed by user."
-#             }
-#         )
-#     now = datetime.now()
-#     current_time = now.strftime("%Y-%m-%d %H:%M:%S")
-#     try:
-#         trans_log = Trans_Log(transactionID="",accid=accid, trade_accID=senddata["trade_accID"], transaction_action=str(senddata["transaction_action"]).upper(), transaction_value=senddata["transaction_value"], transaction_Date=current_time, currency= str(senddata["currency"]).upper())
-#         db.session.add(trans_log)
-#         db.session.commit()
-#     except:
-#         return jsonify(
-#             {
-#                 "code": 500,
-#                 "data": {
-#                     "accid": accid,
-#                     "data": senddata,
-#                     "time":current_time
-#                 },
-#                 "message": "An error occurred creating transaction log."
-#             }
-#         ), 500
-#     return jsonify(
-#         {
-#             "code": 200,
-#             "data":{
-#                 "accid": accid,
-#                 "data": senddata,
-#                 "time":current_time
-#             },
-#             "message": "Transaction log successfully created"
-#         }
-#     )
-
 
 if __name__ == '__main__':
     print("\nThis is " + os.path.basename(__file__), end='')

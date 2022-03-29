@@ -1,9 +1,5 @@
 #!/usr/bin/env python3
-
-import os
-import json
-
-import amqp_setup
+import os, json, amqp_setup
 
 monitorBindingKey = '*.error.#'
 
@@ -31,8 +27,6 @@ def processError(errorMsg):
         print("--INVALID JSON:", e)
         print("--DATA:", errorMsg)
     print() # print a new line feed as a separator
-
-
 
 if __name__ == "__main__":  # execute this program only if it is run as a script (not by 'import')    
     print("\nThis is " + os.path.basename(__file__), end='')

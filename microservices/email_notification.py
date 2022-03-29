@@ -1,18 +1,11 @@
 #!/usr/bin/env python3
-
-import json
-import os
-
-import amqp_setup
-
-import sendgrid, base64
+import json, os, amqp_setup, sendgrid, base64
 from sendgrid.helpers.mail import Mail, Email, To, Content
 
 monitorBindingKey='*.log'
 
 def receiveEmailNotification():
     amqp_setup.check_setup()
-
     queue_name = 'email_notification'
 
     # set up a consumer and start to wait for coming messages
@@ -71,7 +64,6 @@ def get_stock_info(senddata):
             "data":res
         }
     )
-
 
 if __name__ == '__main__':
     print("\nThis is " + os.path.basename(__file__), end='')

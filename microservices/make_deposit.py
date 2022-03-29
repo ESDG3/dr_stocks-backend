@@ -1,62 +1,41 @@
+import os, sys, amqp_setup, pika, json, requests
+from os import environ
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-
-import os, sys
-from os import environ
-
-import requests
 from invokes import invoke_http
-
-import amqp_setup
-import pika
-import json
 
 app = Flask(__name__)
 CORS(app)
 
 trading_acc_URL = environ.get('trading_acc_URL') or "http://localhost:5004/trading_acc/plus"
-# transaction_log_URL = "http://localhost:5005/trans_log/create"
 user_info_URL = environ.get('user_info_URL') or "http://localhost:5006/account/email"
-# email_notification_URL = "http://localhost:5003/email_noti/send"
-# error_URL = "http://localhost:5008/error"
 
-# deposit {
-#   "email" : "johnmark@gmail.com",
-#   "amount" : 5000,
-#   "transaction_action" : "DEPOSIT",
-#   "currency" : "USD"
-# }
 @app.route("/make_deposit", methods=['POST'])
 def make_deposit():
     head_apikey = request.args.get('apikey')
+    trequest = request.get_json(force=True)
     # Simple check of input format and data of the request are JSON
-    if request.is_json:
-        try:
-            deposit = request.get_json()
-            print("\nReceived an deposit in JSON:", deposit)
+    try:
+        deposit = trequest
+        print("\nReceived an deposit in JSON:", deposit)
 
-            # do the actual work
-            # 2. Accept Deposit amount
-            result = processDeposit(deposit, head_apikey)
-            return jsonify(result), result["code"]
+        # do the actual work
+        # 2. Accept Deposit amount
+        result = processDeposit(deposit, head_apikey)
+        return jsonify(result), result["code"]
 
-        except Exception as e:
-            # Unexpected error in code
-            exc_type, exc_obj, exc_tb = sys.exc_info()
-            fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
-            ex_str = str(e) + " at " + str(exc_type) + ": " + fname + ": line " + str(exc_tb.tb_lineno)
-            print(ex_str)
+    except Exception as e:
+        # Unexpected error in code
+        exc_type, exc_obj, exc_tb = sys.exc_info()
+        fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+        ex_str = str(e) + " at " + str(exc_type) + ": " + fname + ": line " + str(exc_tb.tb_lineno)
+        print(ex_str)
 
-            return jsonify({
-                "code": 500,
-                "message": "make_deposit.py internal error: " + ex_str
-            }), 500
+        return jsonify({
+            "code": 500,
+            "message": "make_deposit.py internal error: " + ex_str
+        }), 500
 
-    # if reached here, not a JSON request.
-    return jsonify({
-        "code": 400,
-        "message": "Invalid JSON input: " + str(request.get_data())
-    }), 400
 
 def processDeposit(deposit, head_apikey):
     # 3. Retrieve the amount trader has 
@@ -149,12 +128,9 @@ def processDeposit(deposit, head_apikey):
     amqp_setup.channel.basic_publish(exchange=amqp_setup.exchangename, routing_key="email.log", 
         body=email_log_message)
     print("\nDeposit action performed and notified user.\n")
-        
 
     # - reply from the invocation is not used;
     # continue even if this invocation fails
-
-
     # 9. Return confirmation of deposit
     return {
         "code": 201,
@@ -171,6 +147,15 @@ def invalid_route(e):
             "message": "Invalid route."
         }
     ), 404
+
+@app.errorhandler(400) 
+def invalid_route(e): 
+    return jsonify(
+        {
+            "code": 400,
+            "message": "Invalid JSON input"
+        }
+    ), 400
 
 @app.errorhandler(500) 
 def invalid_route(e): 

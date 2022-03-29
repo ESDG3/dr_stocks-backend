@@ -1,8 +1,7 @@
+import finnhub, base64, os
 from flask import Flask, request, jsonify
-import finnhub, base64
 from flask_cors import CORS
 from os import environ
-import os
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = environ.get('dbURL') or 'mysql+mysqlconnector://root@localhost:3306/stock_infoDB'
@@ -29,6 +28,33 @@ def get_stock_info(stock_symbol):
         return {
             "code" : 200,
             "data" : finnhub_client.quote(stock_symbol)
+        }
+    else: 
+        return {
+            "code" : 500,
+            "message" : "Unexpected error has occurred. Please try again later"
+        }
+    
+
+@app.route("/stock_info/profile2/<string:stock_symbol>")
+def get_company_info(stock_symbol):
+    stock_symbol = str(stock_symbol).upper()
+    if (not stock_symbol.isalpha()) or (len(stock_symbol) > 5):
+        return jsonify(
+            {
+                "code": 404,
+                "message": "Invalid stock symbol.",
+                "temp":stock_symbol
+            }
+        ), 404
+    text = "YzhtNWZrYWFkM2k5aHVjcDk4NzA="
+    msg = base64.b64decode(text)
+    key = str(msg.decode('ascii'))
+    finnhub_client = finnhub.Client(api_key=key)
+    if finnhub_client.company_profile2(symbol=stock_symbol)["country"] != None:
+        return {
+            "code" : 200,
+            "data" : finnhub_client.company_profile2(symbol=stock_symbol)
         }
     else: 
         return {

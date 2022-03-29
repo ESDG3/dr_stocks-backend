@@ -79,7 +79,7 @@ def find_by_accID(accid):
 def create_stock_pref(accid):
     #Variables
     to_add_list, added_list, success_list, error_list  = [], [], [], []
-    senddata = request.get_json()
+    senddata = request.get_json(force=True)
     #Check if accID matches
     if (str(accid) != str(senddata['accid'])):
         return jsonify(
@@ -95,8 +95,8 @@ def create_stock_pref(accid):
             added_list.append(stock_industry)
         else:
             to_add_list.append(stock_industry)
-    #If there is an item in preference that is added before, return
-    if len(added_list):
+    # #If there is an item in preference that is added before, return
+    if len(added_list) == len(senddata['stock_industry']):
         return jsonify(
                 {
                     "code": 400,
@@ -104,7 +104,7 @@ def create_stock_pref(accid):
                         "accid": accid,
                         "stock_industry": added_list
                     },
-                    "message": "Stock(s) preference already exists. Please remove added stock(s) preference"
+                    "message": "Stock(s) preference already exists."
                 }
             ), 400
     #Loop thru items in to_add_list
@@ -160,14 +160,11 @@ def create_stock_pref(accid):
             }
         )
 
-
-#DELETE
-@app.route("/stock_pref/remove/<string:accid>", methods=['DELETE'])
+@app.route("/stock_pref/remove/<string:accid>", methods=['POST'])
 def delete_stock_pref(accid):
     #Variables
     deleted_list, error_list = [], []
-    senddata = request.get_json()
-
+    senddata = request.get_json(force=True)
     #Check if accID matches
     if (str(accid) != str(senddata['accid'])):
         return jsonify(
@@ -237,6 +234,15 @@ def invalid_route(e):
             "message": "Action not allowed."
         }
     ), 405
+
+@app.errorhandler(400) 
+def invalid_route(e): 
+    return jsonify(
+        {
+            "code": 400,
+            "message": "Bad Request."
+        }
+    ), 400
 
 
 if __name__ == '__main__':
