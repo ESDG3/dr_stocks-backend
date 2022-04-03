@@ -1,4 +1,4 @@
-# dr_stocks-backend
+# Dr Stocks Backend Setup Guide
 Prerequisite to run this project
 1. WAMPServer
 2. MySQL
@@ -41,18 +41,3 @@ How to setup the backend services?
     
 
 With this, you have successfully configured the backend services
-
-How to setup frontend services?
-1. Unzip the zip file into a folder
-2. Copy the frontend folder to the "www" folder in your "wamp64" folder on your C: drive
-3. Next, make sure that your WAMPServer is running
-4. Enter this URL in your browser:
-http://localhost/dr_stocks-frontend/index.html
-![](/readme_img/login_page.png)
-5. You can then login using this account details:
-    Email: maryesther@gmail.com
-    Password: temp1
-6. Next, you will be greeted with this main page
-![](/readme_img/main_page.png)
-
-With this, you have successfully setup this project and please feel free to try out this project!
