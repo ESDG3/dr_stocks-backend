@@ -33,27 +33,7 @@ class Trading_Acc(db.Model):
             "currency": self.currency
         }
 
-
 #GET
-@app.route("/trading_acc/all")
-def get_all():
-    trading_acc_list = Trading_Acc.query.all()
-    if len(trading_acc_list):
-        return jsonify(
-            {
-                "code": 200,
-                "data": {
-                    "trading_accounts": [trading_acc.json() for trading_acc in trading_acc_list]
-                }
-            }
-        )
-    return jsonify(
-        {
-            "code": 404,
-            "message": "There are no trading account."
-        }
-    ), 404
-
 @app.route("/trading_acc/<string:accid>/<string:currency>")
 def find_by_accid(accid, currency):
     currency = str(currency).upper()
@@ -85,59 +65,6 @@ def find_by_accid(accid, currency):
             "message": "Trading account not found."
         }
     ), 404
-
-
-#POST
-@app.route("/trading_acc/create/<string:accid>", methods=['POST'])
-def create_trading_acc(accid):
-    senddata = request.get_json()
-    #Check if accID matches
-    if (str(accid) != str(senddata['accid'])):
-        return jsonify(
-            {
-                "code": 401,
-                "message": "Unauthorised action performed by user."
-            }
-        )
-    currency = str(senddata["currency"]).upper()
-    result = Trading_Acc.query.filter_by(accid=accid, currency=currency).first()
-    if result:
-        trade_accid = result.json()['trade_accid']
-        return jsonify(
-            {
-                "code": 400,
-                "data": {
-                    "trade_accid": trade_accid,
-                    "accid": accid,
-                    "currency": currency
-                },
-                "message": "Trading account already exists."
-            }
-        ), 400
-    trading_acc = Trading_Acc(trade_accid='',accid=accid, trade_acc_balance = 0.0, currency=currency)
-    try:
-        db.session.add(trading_acc)
-        db.session.commit()
-        return jsonify(
-            {
-                "code": 200,
-                "data": {
-                    "message": "Trading account successfully created"
-                }
-            }
-        )
-    except:
-        return jsonify(
-            {
-                "code": 500,
-                "data": {
-                    "accid": accid
-                },
-                "message": "An error occurred creating a trading account."
-            }
-        ), 500
-
-
 
 #PUT (Minus)
 @app.route("/trading_acc/minus/<string:accid>", methods=['PUT'])
@@ -186,7 +113,7 @@ def minus(accid):
         }
     ), 404
 
-#Put (Plus)
+#PUT (PLUS)
 @app.route("/trading_acc/plus/<string:accid>", methods=['PUT'])
 def plus(accid):
     trading_acc = Trading_Acc.query.filter_by(accid=accid).first()
@@ -241,45 +168,6 @@ def plus(accid):
             "message": "Trading account not found."
         }
     ), 404
-
-
-#DELETE
-@app.route("/trading_acc/delete/<string:accid>", methods=['DELETE'])
-def delete_trading_acc(accid):
-    senddata = request.get_json()
-    #Check if accID matches
-    if (str(accid) != str(senddata['accid'])):
-        return jsonify(
-            {
-                "code": 401,
-                "message": "Unauthorised action performed by user."
-            }
-        )
-    currency = str(senddata["currency"]).upper()
-    trading_acc = Trading_Acc.query.filter_by(accid=accid, currency=currency).first()
-    trading_acc_id = trading_acc.trade_accid
-    try:
-        db.session.delete(trading_acc)
-        db.session.commit()
-        return jsonify(
-            {
-                "code": 200,
-                "data": {
-                    "message": "Trading account successfully deleted",
-                    "trading_acc_id": trading_acc_id
-                }
-            }
-        )
-    except:
-        return jsonify(
-            {
-                "code": 500,
-                "data": {
-                    "trading_acc_id": trading_acc_id
-                },
-                "message": "An error occurred deleting trading account."
-            }
-        ), 500
 
 # Error Handling 
 @app.errorhandler(404) 

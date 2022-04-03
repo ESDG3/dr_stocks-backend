@@ -30,25 +30,6 @@ class Stock_Pref(db.Model):
         }
 
 #GET
-@app.route("/stock_pref/all")
-def get_all():
-    stock_pref_list = Stock_Pref.query.all()
-    if len(stock_pref_list):
-        return jsonify(
-            {
-                "code": 200,
-                "data": {
-                    "stock preferences": [stock_pref.json() for stock_pref in stock_pref_list]
-                }
-            }
-        )
-    return jsonify(
-        {
-            "code": 404,
-            "message": "There are no stock preferences."
-        }
-    ), 404
-
 @app.route("/stock_pref/<string:accid>")
 def find_by_accID(accid):
     if len(str(accid)) != 7 or (not str(accid).isdigit):
@@ -160,6 +141,7 @@ def create_stock_pref(accid):
             }
         )
 
+#REMOVE
 @app.route("/stock_pref/remove/<string:accid>", methods=['POST'])
 def delete_stock_pref(accid):
     #Variables

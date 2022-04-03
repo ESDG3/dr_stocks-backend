@@ -44,25 +44,6 @@ class User_Stock(db.Model):
         }
 
 #GET
-@app.route("/user_stock/all")
-def get_all():
-    user_stock_list = User_Stock.query.all()
-    if len(user_stock_list):
-        return jsonify(
-            {
-                "code": 200,
-                "data": {
-                    "user_stocks": [user_stock.json() for user_stock in user_stock_list]
-                }
-            }
-        )
-    return jsonify(
-        {
-            "code": 404,
-            "message": "No such stock found."
-        }
-    ), 404
-
 @app.route("/user_stock/<string:accid>")
 def find_by_accID(accid):
     if len(str(accid)) != 7 or (not str(accid).isdigit):
@@ -125,46 +106,6 @@ def buying_user_stock(accid):
                 "message": "User stock(s) successfully bought"
             }
     )
-
-
-#DELETE
-@app.route("/user_stock/sell/<string:accid>", methods=['DELETE'])
-def selling_user_stock(accid):
-    #Variables
-    senddata = request.get_json()
-    #Check if accID matches
-    if (str(accid) != str(senddata['accid'])):
-        return jsonify(
-            {
-                "code": 401,
-                "message": "Unauthorised action performed by user."
-            }
-        )
-    try:
-        user_stock = User_Stock.query.filter_by(accid=accid, tradeid=senddata["tradeid"]).first()
-        db.session.delete(user_stock)
-        db.session.commit()
-    except:
-        return jsonify(
-            {
-                "code": 500,
-                "data": {
-                    "accid": accid,
-                },
-                "message": "An error occurred selling user stock(s)."
-            }
-        ), 500
-    return jsonify(
-            {
-                "code": 200,
-                "data":{
-                    "accid": accid,
-                },
-                "message": "User stock(s) successfully sold"
-            }
-        )
-
-#Need find a way to combine stocks and account for selling of all stocks
 
 # Error Handling 
 @app.errorhandler(404) 

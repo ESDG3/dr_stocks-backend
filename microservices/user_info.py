@@ -42,43 +42,6 @@ class User(db.Model):
             "apikey": self.apikey
         }
 
-@app.route("/account/all")
-def get_all():
-    acc_list = User.query.all()
-    if len(acc_list):
-        return jsonify(
-            {
-                "code": 200,
-                "data": {
-                    "users": [user.json() for user in acc_list]
-                }
-            }
-        )
-    return jsonify(
-        {
-            "code": 404,
-            "message": "There is no user."
-        }
-    ), 404
-
-# To be deleted since we are only using email
-# @app.route("/account/accID/<string:accID>")
-# def find_by_accID(accID):
-#     user = User.query.filter_by(accID=accID).first()
-#     if user:
-#         return jsonify(
-#             {
-#                 "code": 200,
-#                 "data": user.json()
-#             }
-#         )
-#     return jsonify(
-#         {
-#             "code": 404,
-#             "message": "User not found."
-#         }
-#     ), 404
-
 @app.route("/account/login")
 def login():
     head_email = str(request.args.get('email'))
@@ -104,6 +67,13 @@ def login():
             {
                 "code": 404,
                 "message": "Invalid password."
+            }
+        ), 404
+    else:
+        return jsonify(
+            {
+                "code": 404,
+                "message": "User not found."
             }
         ), 404
 

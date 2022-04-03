@@ -9,7 +9,7 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {'pool_recycle': 299}
 CORS(app)
 
-#GET
+#GET Stock Info
 @app.route("/stock_info/<string:stock_symbol>")
 def get_stock_info(stock_symbol):
     stock_symbol = str(stock_symbol).upper()
@@ -40,7 +40,7 @@ def get_stock_info(stock_symbol):
             "message" : "Unexpected error has occurred. Please try again later"
         }
     
-
+#GET Company Info
 @app.route("/stock_info/profile2/<string:stock_symbol>")
 def get_company_info(stock_symbol):
     stock_symbol = str(stock_symbol).upper()
@@ -56,15 +56,15 @@ def get_company_info(stock_symbol):
     msg = base64.b64decode(text)
     key = str(msg.decode('ascii'))
     finnhub_client = finnhub.Client(api_key=key)
-    if finnhub_client.company_profile2(symbol=stock_symbol)["country"] != None:
-        return {
-            "code" : 200,
-            "data" : finnhub_client.company_profile2(symbol=stock_symbol)
-        }
-    elif finnhub_client.company_profile2(symbol=stock_symbol)["country"] == None:
+    if len(finnhub_client.company_profile2(symbol=stock_symbol)) <= 0:
         return {
             "code" : 404,
             "message" : "Invalid stock symbol."
+        }
+    if len(finnhub_client.company_profile2(symbol=stock_symbol)) > 0:
+        return {
+            "code" : 200,
+            "data" : finnhub_client.company_profile2(symbol=stock_symbol)
         }
     else: 
         return {
