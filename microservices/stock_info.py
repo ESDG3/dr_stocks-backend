@@ -13,7 +13,7 @@ CORS(app)
 @app.route("/stock_info/<string:stock_symbol>")
 def get_stock_info(stock_symbol):
     stock_symbol = str(stock_symbol).upper()
-    if (not stock_symbol.isalpha()) or (len(stock_symbol) > 5):
+    if (len(stock_symbol) > 5):
         return jsonify(
             {
                 "code": 404,
@@ -29,6 +29,11 @@ def get_stock_info(stock_symbol):
             "code" : 200,
             "data" : finnhub_client.quote(stock_symbol)
         }
+    elif finnhub_client.quote(stock_symbol)["d"] == None:   
+        return {
+            "code" : 404,
+            "message" : "Invalid stock symbol."
+        }
     else: 
         return {
             "code" : 500,
@@ -39,7 +44,7 @@ def get_stock_info(stock_symbol):
 @app.route("/stock_info/profile2/<string:stock_symbol>")
 def get_company_info(stock_symbol):
     stock_symbol = str(stock_symbol).upper()
-    if (not stock_symbol.isalpha()) or (len(stock_symbol) > 5):
+    if (len(stock_symbol) > 5):
         return jsonify(
             {
                 "code": 404,
@@ -55,6 +60,11 @@ def get_company_info(stock_symbol):
         return {
             "code" : 200,
             "data" : finnhub_client.company_profile2(symbol=stock_symbol)
+        }
+    elif finnhub_client.company_profile2(symbol=stock_symbol)["country"] == None:
+        return {
+            "code" : 404,
+            "message" : "Invalid stock symbol."
         }
     else: 
         return {
