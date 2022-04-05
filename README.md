@@ -15,8 +15,9 @@ How to setup the backend services?
 ![](./readme_img/docker_id.png)
 4. Make sure you have run the Docker application.
 5. Open a cmd terminal and cd to the "dr_stocks-backend/microservices" folder.
-6. After, proceed to type this command "docker-compose up -d" and hit enter to run it in the terminal. This is set up all the required services. 
-7. Wait for about 30 seconds after the containers have been created to let the services start up.
+6. After, proceed to type this command "docker-compose up -d" and hit enter to run it in the terminal. This will set up all the required services. 
+![](./readme_img/docker_compose.png)
+7. Wait for about 30 seconds after the containers have been created and started to let the services start up.
 ![](./readme_img/docker_con.png)
 8. Next, type this URL "localhost:1337" in your browser to access the KONGA portal.
 9. Create an admin account:
