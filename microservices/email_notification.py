@@ -27,27 +27,28 @@ def get_stock_info(senddata):
     sg = sendgrid.SendGridAPIClient(api_key=key)
     from_email = Email("dr.stocks.pte.ltd@gmail.com")  # Change to your verified sender
     to_email = To(user_input["email"])
+    email = user_input["email"]
     subject = ""
     content_text = ""
     if (str(user_input["transaction_action"]).upper() == 'DEPOSIT'):
-        subject = "Status update on your deposit"
+        subject = "[Dr. Stocks] - Status update on your deposit"
         if (system_output["code"] == 500):
-            content_text = "Deposit service has failed. The server faced an internal error."
+            content_text = f"Dear {email}, \n\nDeposit service has failed. The server faced an internal error. \nPlease try again later. \n\nRegards, \n\nDr. Stocks PTE LTD"
         elif (system_output["code"] > 300):
-            content_text = "Deposit service has failed. There is an error processing the deposit."
+            content_text = f"Dear {email}, \n\nDeposit service has failed. There is an error processing the deposit. \nPlease try again later. \n\nRegards, \n\nDr. Stocks PTE LTD"
         else:
-            content_text = "Deposit service has been successfully registered."
+            content_text = f"Dear {email}, \n\nDeposit service has been successfully registered. \n\nRegards, \n\nDr. Stocks PTE LTD"
     elif (str(user_input["transaction_action"]).upper() == 'BUY'):
-        subject = "Status update on your buying stock"
+        subject = "[Dr. Stocks] - Status update on your buying stock"
         if (system_output["code"] == 500):
-            content_text = "Buying stock service has failed. The server faced an internal error."
+            content_text = f"Dear {email}, \n\nBuying stock service has failed. The server faced an internal error. \nPlease try again later. \n\nRegards, \n\nDr. Stocks PTE LTD"
         elif (system_output["code"] > 300):
-            content_text = "Buying stock service has failed. There is an error processing the deposit."
+            content_text = f"Dear {email}, \n\nBuying stock service has failed. There is an error processing the deposit. \nPlease try again later. \n\nRegards, \n\nDr. Stocks PTE LTD"
         else:
-            content_text = "Buying stock service has been successfully registered."
+            content_text = f"Dear {email}, \n\nBuying stock service has been successfully registered. \n\nRegards, \n\nDr. Stocks PTE LTD"
     else:
-        subject = "Error occured when processing your request"
-        content_text = "There is an error processing your request."
+        subject = "[Dr. Stocks] - Error occured when processing your request"
+        content_text = f"Dear {email}, \n\nThere is an error processing your request. \n\nRegards, \n\nDr. Stocks PTE LTD"
       # Change to your recipient
     content = Content("text/plain", content_text)
     mail = Mail(from_email, to_email, subject, content)
