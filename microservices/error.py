@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import os, json, amqp_setup
 
-monitorBindingKey = '*.error.#'
+monitorBindingKey = '*.error'
 
 def receiveError():
     amqp_setup.check_setup()
